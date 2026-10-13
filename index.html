@@ -345,6 +345,39 @@ p.verify.ok { color: var(--ok); } p.verify.bad { color: var(--bad); }
 .x-vals b { font-size: 1.05rem; }
 .x-fix { flex-basis: 100%; font-size: 0.88rem; }
 
+/* Partes da inscrição: um bloco por parte */
+.comps.parts { border: 0; padding: 0; }
+.comps.parts legend { padding: 0 0 8px; font-size: 0.95rem; color: var(--fg); }
+#compList { display: flex; flex-direction: column; gap: 14px; counter-reset: part; }
+#compList .comp-edit { counter-increment: part; background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--accent); border-radius: 12px; padding: 12px 14px 14px; gap: 10px; box-shadow: var(--shadow); }
+#compList .comp-edit.is-loja { border-left-color: var(--cash); }
+.comp-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid var(--line); }
+.comp-n::before { content: "Parte " counter(part); font-family: var(--f-display); font-size: 1.15rem; font-weight: 700; letter-spacing: 0.02em; }
+.comp-top .link { padding: 4px 0; font-size: 0.88rem; }
+.comps.parts > .btn { margin-top: 12px; align-self: flex-start; }
+
+/* ---------- Google Sheets ---------- */
+.top-side { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; justify-content: flex-end; }
+.ev-nav { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.syncchip { font: inherit; font-size: 0.78rem; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--surface); color: var(--muted); border-radius: 999px; padding: 5px 10px; cursor: pointer; max-width: 220px; min-height: 30px; }
+.syncchip .t { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.syncchip .dot, .linkstate .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); flex: none; }
+.syncchip.ok .dot, .linkstate.ok .dot { background: var(--ok); }
+.syncchip.warn .dot, .linkstate.warn .dot { background: var(--warn); }
+.syncchip.bad .dot, .linkstate.bad .dot { background: var(--bad); }
+.syncchip.busy .dot { background: var(--accent); animation: pulse 1s infinite alternate; }
+@keyframes pulse { from { opacity: 0.3; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .syncchip.busy .dot { animation: none; } }
+.linkstate { display: flex; align-items: center; gap: 8px; font-weight: 600; }
+.linkbox { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.sheetbox { background: var(--surface); border: 1px solid var(--line); border-left: 5px solid var(--ok); border-radius: var(--radius); padding: 14px 16px; }
+.todo { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 4px; }
+.sheetbox .btn.primary { align-self: flex-start; }
+.report-box { background: var(--surface-2); border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 0.92rem; }
+.checks { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; font-variant-numeric: tabular-nums; }
+.readonly .editonly, .readonly .addbox, .readonly [data-act="ci-more"] { display: none !important; }
+.readonly .tog, .readonly .ci-pay button { pointer-events: none; }
+
 </style>
 </head>
 <body>
@@ -387,7 +420,7 @@ function stdComps(storeId, mainLabel, mainLine) {
     { key: 'loja', label: 'Loja', price: 2, kind: 'loja', storeId, def: true },
     { key: 'main', label: mainLabel, price: 1, kind: 'line', lineId: mainLine, def: true },
     { key: 'mensal', label: 'Mensal estádios', price: 2, kind: 'line', lineId: 'l_mens', def: true, monthly: true },
-    { key: 'extra', label: 'Contribuição adicional', price: 1, kind: 'line', lineId: 'l_mens', def: false, extra: true },
+    { key: 'extra', label: 'Contribuição adicional', price: 1, kind: 'line', lineId: 'l_doa', def: false, extra: true },
   ];
 }
 
@@ -396,8 +429,9 @@ function baseState() {
   const players = PLAYER_LIST.map((name) => ({ id: slugId(name), name, org: name === 'paparapas' || name === 'Hyero', months: {} }));
   OCT_PAID.forEach((n) => { const p = players.find((x) => x.name === n); if (p) p.months['2026-10'] = true; });
   return {
-    version: 2,
+    version: 3,
     settings: { treasurerId: P, newMethod: 'mbway' },
+    sheet: null,
     players,
     accounts: [
       { id: 'a_liga', name: 'BBPT Liga', opening: 90, openingDate: '2026-10-13' },
@@ -428,10 +462,10 @@ function baseState() {
     ],
     stores: [{ id: 's_fenix', name: 'Loja Fénix' }, { id: 's_critx', name: 'Loja Critical X' }],
     types: [
-      { id: 't_lfn', name: 'Liga Fénix Negra', comps: stdComps('s_fenix', 'Liga', 'l_lfn2') },
-      { id: 't_cfn', name: 'Evento casual Fénix Negra', comps: stdComps('s_fenix', 'Semanal estádios', 'l_casfn') },
-      { id: 't_lcx', name: 'Liga Critical X', comps: stdComps('s_critx', 'Liga', 'l_lcx1') },
-      { id: 't_ccx', name: 'Evento casual Critical X', comps: stdComps('s_critx', 'Semanal estádios', 'l_cascx') },
+      { id: 't_lfn', name: 'Liga Fénix Negra', sheetTab: 'Liga Fénix Negra - Season 2', comps: stdComps('s_fenix', 'Liga', 'l_lfn2') },
+      { id: 't_cfn', name: 'Evento casual Fénix Negra', sheetTab: 'Fénix Negra - Eventos Casuais', comps: stdComps('s_fenix', 'Semanal estádios', 'l_casfn') },
+      { id: 't_lcx', name: 'Liga Critical X', sheetTab: 'Liga Critical X - Season 1', comps: stdComps('s_critx', 'Liga', 'l_lcx1') },
+      { id: 't_ccx', name: 'Evento casual Critical X', sheetTab: 'Critical - Eventos Casuais', comps: stdComps('s_critx', 'Semanal estádios', 'l_cascx') },
     ],
     tournaments: [], entries: [], moves: [],
     _ids: { P, H },
@@ -481,7 +515,9 @@ const fundAcc = (fundId) => fundById(fundId)?.accountId;
 /* Já pagou a mensal deste mês? (marcação manual/Excel ou noutra inscrição) */
 function monthlyPaidElsewhere(playerId, month, exceptEntryId) {
   const p = playerById(playerId);
-  if (p?.months?.[month]) return { how: 'excel' };
+  const own = exceptEntryId ? tourById(S.entries.find((e) => e.id === exceptEntryId)?.tid) : null;
+  const wroteByThis = own?.launched?.wrote?.months?.[p?.name];
+  if (p?.months?.[month] && !wroteByThis) return { how: 'excel' };
   for (const e of S.entries) {
     if (e.id === exceptEntryId || e.playerId !== playerId) continue;
     const t = tourById(e.tid);
@@ -682,7 +718,9 @@ function alertsFor(scope) {
       }
       if (!playerById(e.recv)?.org) out.push({ lvl: 'bad', txt: `A inscrição de ${pn(e.playerId)} diz que o dinheiro ficou com alguém que não é organizador.` });
     });
-    if (t.launched) {
+    if (t.launched?.by === 'sheet') {
+      if (S.sheet && sheetPayload(t.id).summary.length) out.push({ lvl: 'warn', txt: 'Há alterações deste torneio por escrever no Google Sheets. Vê o separador Excel.' });
+    } else if (t.launched) {
       const now = excelDeltas(t.id);
       if (JSON.stringify(now) !== JSON.stringify(t.launched.snap)) out.push({ lvl: 'bad', txt: `Este torneio mudou depois de ser lançado no Excel (${fmtDate(t.launched.date)}). Vê o separador Excel para saberes o que corrigir.` });
     }
@@ -693,12 +731,12 @@ function alertsFor(scope) {
 
 /* ---------- Excel ---------- */
 /* O que um torneio (ou movimento geral) muda no Excel. */
-function excelDeltas(tid, moveId) {
+function excelDeltas(tid, moveId, skipNames) {
   const lines = {}, users = {}, extras = {};
   const exp = [];
   const t = tid ? tourById(tid) : null;
   if (t) {
-    S.entries.filter((e) => e.tid === tid && e.method !== 'debt').forEach((e) => {
+    S.entries.filter((e) => e.tid === tid && e.method !== 'debt' && !(skipNames && skipNames.has(pn(e.playerId)))).forEach((e) => {
       Object.entries(e.amt).forEach(([k, v]) => {
         const c = compOf(t, k); if (!c || c.kind !== 'line') return;
         lines[c.lineId] = r2((lines[c.lineId] || 0) + num(v));
@@ -723,6 +761,13 @@ function fundDeltaOf(d) {
 
 /* Valores que o Excel deve ter agora: base + tudo o que já foi marcado como lançado */
 function excelCurrent() {
+  const live = S.sheet?.budget;
+  if (live && live.lines?.length) {
+    const lines = {}, funds = {};
+    S.lines.forEach((l) => { const hit = live.lines.find((x) => normName(x.name) === normName(l.name)); lines[l.id] = hit ? hit.value : num(l.value); });
+    S.funds.forEach((f) => { const v = live.saldos?.['Saldo ' + f.name]; funds[f.id] = typeof v === 'number' ? v : num(f.saldo); });
+    return { lines, funds, live: true, corrente: live.saldos?.['Saldo Corrente'] };
+  }
   const lines = {}, funds = {};
   S.lines.forEach((l) => { lines[l.id] = num(l.value); });
   S.funds.forEach((f) => { funds[f.id] = num(f.saldo); });
@@ -923,8 +968,374 @@ function importData(data, mode) {
   return { t: data.tournaments.length, e: data.entries.length, m: (data.moves || []).length };
 }
 
+
+/* ---------- Ligação ao Google Sheets ---------- */
+const normName = (s) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+const weekKey = (label) => normName(String(label).split('(')[0]);
+
+/* Atualiza dados antigos guardados no telemóvel */
+function migrate(st) {
+  if (!st) return st;
+  const seedTypes = baseState().types;
+  st.types.forEach((t) => {
+    const sd = seedTypes.find((x) => x.id === t.id);
+    if (!t.sheetTab && sd) t.sheetTab = sd.sheetTab;
+    t.comps.forEach((c) => { if (c.extra && c.lineId === 'l_mens') c.lineId = 'l_doa'; });
+  });
+  st.tournaments.forEach((t) => {
+    t.comps.forEach((c) => { if (c.extra && c.lineId === 'l_mens') c.lineId = 'l_doa'; });
+    if (!t.sheetTab) t.sheetTab = st.types.find((x) => x.id === t.typeId)?.sheetTab || '';
+  });
+  if (!('sheet' in st)) st.sheet = null;
+  st.version = 3;
+  return st;
+}
+
+/* Junta o que veio do Sheets: jogadores, meses pagos e saldos */
+function mergeSheet(sheet) {
+  if (!sheet) return;
+  S.sheet = sheet;
+  const year = todayISO().slice(0, 4);
+  const seen = new Set();
+  (sheet.players || []).forEach((sp) => {
+    let p = S.players.find((x) => normName(x.name) === normName(sp.name));
+    if (!p) { p = { id: slugId(sp.name), name: sp.name, org: false, months: {} }; if (playerById(p.id)) p.id = uid('p'); S.players.push(p); }
+    p.name = sp.name; p.inSheet = true; p.sheetExtra = sp.extra || 0;
+    const months = {};
+    Object.keys(p.months || {}).forEach((k) => { if (!k.startsWith(year)) months[k] = p.months[k]; });
+    Object.keys(sp.paid || {}).forEach((m) => { months[`${year}-${pad2(m)}`] = true; });
+    p.months = months;
+    seen.add(p.id);
+  });
+  S.players.forEach((p) => { if (!seen.has(p.id)) p.inSheet = false; });
+}
+
+const sheetComp = (tab) => (S.sheet?.comps || []).find((c) => normName(c.tab) === normName(tab));
+function suggestWeek(tab) {
+  const c = sheetComp(tab);
+  if (!c) return '';
+  let lastUsed = -1;
+  c.weeks.forEach((w, i) => { if (w.players > 0) lastUsed = i; });
+  const used = new Set(S.tournaments.filter((t) => !t.example && normName(t.sheetTab) === normName(tab)).map((t) => t.sheetWeek));
+  const free = c.weeks.find((w, i) => i > lastUsed && !used.has(w.key));
+  return free ? free.key : '';
+}
+
+/* Que parte da inscrição corresponde a que coluna do Sheets */
+function sheetSlot(c) {
+  if (c.kind === 'loja') return 'loja';
+  if (c.monthly) return 'month';
+  if (c.extra) return 'extra';
+  if (c.key === 'main') return 'liga';
+  return null;
+}
+
+/* O estado que o Sheets deve ter para este torneio */
+function desiredSheet(tid) {
+  const t = tourById(tid);
+  const d = { tab: t.sheetTab, week: t.sheetWeek, ticks: {}, months: {}, extras: {}, despesas: [], lines: {} };
+  S.entries.filter((e) => e.tid === tid && e.method !== 'debt').forEach((e) => {
+    const name = pn(e.playerId);
+    t.comps.forEach((c) => {
+      if (e.amt[c.key] == null) return;
+      const slot = sheetSlot(c);
+      if (slot === 'loja' || slot === 'liga') { (d.ticks[name] ||= { loja: false, liga: false })[slot] = true; }
+      else if (slot === 'month') d.months[name] = true;
+      else if (slot === 'extra') d.extras[name] = r2((d.extras[name] || 0) + num(e.amt[c.key]));
+    });
+  });
+  S.moves.filter((m) => m.tid === tid).forEach((m) => {
+    if (m.kind === 'despesa') d.despesas.push(m.id);
+    if (m.kind === 'receita') d.lines[lineById(m.lineId)?.name] = r2((d.lines[lineById(m.lineId)?.name] || 0) + r2(m.amount));
+  });
+  return d;
+}
+
+/* Pedido para o script: só a diferença entre o que já foi escrito e o que deve estar */
+function sheetPayload(tid, moveId) {
+  if (moveId) {
+    const m = S.moves.find((x) => x.id === moveId);
+    const was = m.launched?.wrote || {};
+    const req = { despesas: [], lines: [] };
+    if (m.kind === 'despesa' && !(was.despesas || []).includes(m.id)) req.despesas.push(despesaRow(m));
+    if (m.kind === 'receita') { const name = lineById(m.lineId)?.name; const add = r2(r2(m.amount) - (was.lines?.[name] || 0)); if (add) req.lines.push({ name, add }); }
+    const want = { despesas: m.kind === 'despesa' ? [m.id] : [], lines: m.kind === 'receita' ? { [lineById(m.lineId)?.name]: r2(m.amount) } : {} };
+    return { req, want, summary: sheetSummary(req), manual: [] };
+  }
+  const t = tourById(tid);
+  const want = desiredSheet(tid);
+  const was = t.launched?.wrote || { ticks: {}, months: {}, extras: {}, despesas: [], lines: {} };
+  const req = { addPlayers: [], comp: null, month: null, extras: [], despesas: [], lines: [] };
+  const manual = [];
+  const sameWeek = !t.launched?.wrote || (was.tab === want.tab && was.week === want.week);
+  if (!sameWeek) manual.push(`Este torneio já foi escrito em ${was.tab} · ${was.week}. Desmarca essa semana à mão ou volta a pôr a mesma semana.`);
+  const names = new Set([...Object.keys(want.ticks), ...(sameWeek ? Object.keys(was.ticks || {}) : [])]);
+  const set = [];
+  names.forEach((n) => {
+    const a = want.ticks[n] || { loja: false, liga: false };
+    const b = (sameWeek && was.ticks?.[n]) || { loja: false, liga: false };
+    const x = { name: n, loja: a.loja !== b.loja ? a.loja : null, liga: a.liga !== b.liga ? a.liga : null };
+    if (x.loja !== null || x.liga !== null) set.push(x);
+  });
+  if (set.length) {
+    if (!want.tab || !want.week) manual.push('Escolhe a aba e a semana do Sheets em Editar torneio.');
+    else req.comp = { tab: want.tab, week: want.week, dateLabel: fmtDate(t.date).replace(/\/(\d{2})(\d{2})$/, '/$2'), set };
+  }
+  const mset = [];
+  new Set([...Object.keys(want.months), ...Object.keys(was.months || {})]).forEach((n) => {
+    if (!!want.months[n] !== !!was.months?.[n]) mset.push({ name: n, value: !!want.months[n] });
+  });
+  if (mset.length) req.month = { m: +t.date.slice(5, 7), set: mset };
+  new Set([...Object.keys(want.extras), ...Object.keys(was.extras || {})]).forEach((n) => {
+    const add = r2((want.extras[n] || 0) - (was.extras?.[n] || 0));
+    if (add) req.extras.push({ name: n, add });
+  });
+  new Set([...Object.keys(want.lines), ...Object.keys(was.lines || {})]).forEach((n) => {
+    const add = r2((want.lines[n] || 0) - (was.lines?.[n] || 0));
+    if (add) req.lines.push({ name: n, add });
+  });
+  want.despesas.forEach((id) => { if (!(was.despesas || []).includes(id)) req.despesas.push(despesaRow(S.moves.find((m) => m.id === id))); });
+  (was.despesas || []).forEach((id) => { if (!want.despesas.includes(id)) manual.push('Uma despesa já escrita no Sheets foi apagada ou mudada na app. Corrige-a à mão na tabela Despesas.'); });
+  const playersNeeded = new Set([...Object.keys(want.ticks), ...Object.keys(want.months), ...Object.keys(want.extras)]);
+  const inSheet = new Set((S.sheet?.players || []).map((x) => normName(x.name)));
+  playersNeeded.forEach((n) => { if (S.sheet && !inSheet.has(normName(n))) req.addPlayers.push(n); });
+  return { req, want, summary: sheetSummary(req), manual };
+}
+
+function despesaRow(m) {
+  return { id: m.id, desc: m.desc || catById(m.catId)?.name || 'Despesa', date: m.date, cat: catById(m.catId)?.name || '', note: m.note || '', value: r2(m.amount) };
+}
+
+function sheetSummary(req) {
+  const L = [];
+  if (req.addPlayers?.length) L.push(`Adicionar à USER LIST: ${req.addPlayers.join(', ')}`);
+  if (req.comp) {
+    const on = (k) => req.comp.set.filter((x) => x[k] === true).length, off = (k) => req.comp.set.filter((x) => x[k] === false).length;
+    L.push(`${req.comp.tab} · ${req.comp.week.replace(/^./, (c) => c.toUpperCase())}: marcar loja ${on('loja')} e liga ${on('liga')}` + (off('loja') + off('liga') ? `, desmarcar ${off('loja') + off('liga')}` : ''));
+  }
+  if (req.month) {
+    const on = req.month.set.filter((x) => x.value).length, off = req.month.set.length - on;
+    L.push(`Users/Estadios · ${MONTHS[req.month.m - 1]}: marcar ${on}` + (off ? `, desmarcar ${off}` : ''));
+  }
+  (req.extras || []).forEach((x) => L.push(`Contribuição adicional de ${x.name}: ${x.add > 0 ? '+' : ''}${eur(x.add)}`));
+  (req.lines || []).forEach((x) => L.push(`${x.name}: ${x.add > 0 ? '+' : ''}${eur(x.add)}`));
+  (req.despesas || []).forEach((x) => L.push(`Despesa nova: ${x.desc} · ${eur(x.value)}`));
+  return L;
+}
+
+/* Depois de o script escrever: guarda o que ficou no Sheets */
+function markWritten(tid, moveId, want, rep) {
+  const item = tid ? tourById(tid) : S.moves.find((m) => m.id === moveId);
+  const prev = item.launched?.wrote;
+  const notFound = new Set(rep.notFound || []);
+  if (notFound.size && want.ticks) { notFound.forEach((n) => { delete want.ticks[n]; delete want.months[n]; delete want.extras[n]; if (prev?.ticks?.[n]) want.ticks[n] = prev.ticks[n]; }); }
+  item.launched = { date: todayISO(), snap: tid ? excelDeltas(tid, null, notFound) : excelDeltas(null, moveId), wrote: want, by: 'sheet', pending: [...notFound] };
+  if (rep.sheet) mergeSheet(rep.sheet);
+}
+
+/* ---------- Registos partilhados ---------- */
+function buildRecords() {
+  const out = new Map();
+  const put = (id, kind, data) => out.set(id, { id, kind, data, json: JSON.stringify(data) });
+  const exTours = new Set(S.tournaments.filter((t) => t.example).map((t) => t.id));
+  S.tournaments.forEach((t) => { if (!t.example) put(t.id, 'tour', t); });
+  S.entries.forEach((e) => { if (!exTours.has(e.tid)) put(e.id, 'entry', e); });
+  S.moves.forEach((m) => { if (!exTours.has(m.tid)) put(m.id, 'move', m); });
+  S.players.forEach((p) => { if (p.org || p.inSheet === false) put('pl_' + p.id, 'pl', { id: p.id, name: p.name, org: !!p.org }); });
+  put('cfg', 'cfg', { treasurerId: S.settings.treasurerId, types: S.types, stores: S.stores, accounts: S.accounts, cats: S.cats, funds: S.funds, lines: S.lines });
+  return out;
+}
+
+function applyRecords(list) {
+  list.forEach((r) => {
+    const arrName = { tour: 'tournaments', entry: 'entries', move: 'moves' }[r.kind];
+    if (arrName) {
+      const arr = S[arrName];
+      const i = arr.findIndex((x) => x.id === r.id);
+      if (r.deleted) { if (i >= 0) arr.splice(i, 1); }
+      else if (i >= 0) arr[i] = r.data; else arr.push(r.data);
+    } else if (r.kind === 'pl') {
+      const id = r.id.slice(3);
+      const p = playerById(id) || S.players.find((x) => normName(x.name) === normName(r.data?.name));
+      if (r.deleted) { if (p) p.org = false; return; }
+      if (p) p.org = !!r.data.org; else S.players.push({ id: r.data.id, name: r.data.name, org: !!r.data.org, months: {}, inSheet: false });
+    } else if (r.kind === 'cfg' && !r.deleted) {
+      const c = r.data;
+      S.settings.treasurerId = c.treasurerId;
+      ['types', 'stores', 'accounts', 'cats', 'funds', 'lines'].forEach((k) => { if (Array.isArray(c[k])) S[k] = c[k]; });
+    }
+  });
+}
+
 if (typeof module !== 'undefined') {
-  module.exports = { seed, emptyState, setState, getState: () => S, compute, actionsFor, alertsFor, excelPlan, excelCurrent, pendingLaunch, launch, bankView, discordReport, csvCheckin, csvExcel, exportBundle, importData, defaultAmounts, monthlyPaidElsewhere, addExample };
+  module.exports = { migrate, mergeSheet, sheetPayload, desiredSheet, markWritten, buildRecords, applyRecords, suggestWeek, excelDeltas, seed, emptyState, setState, getState: () => S, compute, actionsFor, alertsFor, excelPlan, excelCurrent, pendingLaunch, launch, bankView, discordReport, csvCheckin, csvExcel, exportBundle, importData, defaultAmounts, monthlyPaidElsewhere, addExample };
+}
+
+/* Caixa BBPT — ligação ao Google Sheets (script do ficheiro de Finanças) */
+'use strict';
+
+const LINK_KEY = KEY + '-link';
+let LINK = { url: '', key: '', role: '', file: '', since: 0, base: {}, init: false, lastOk: 0, lastErr: '', sheetAt: 0 };
+let SYNC = { busy: false, timer: null, poll: null, queued: false };
+
+function loadLink() { try { const l = JSON.parse(localStorage.getItem(LINK_KEY) || 'null'); if (l) LINK = { ...LINK, ...l }; } catch (e) { /* */ } }
+function saveLink() { try { localStorage.setItem(LINK_KEY, JSON.stringify(LINK)); } catch (e) { /* */ } }
+const linked = () => !!(LINK.url && LINK.key && LINK.role);
+const readOnly = () => linked() && LINK.role === 'read';
+
+async function api(body) {
+  const res = await fetch(LINK.url, {
+    method: 'POST', redirect: 'follow',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ ...body, key: LINK.key }),
+  });
+  let j;
+  try { j = await res.json(); } catch (e) { throw new Error('O link não respondeu como o script da Caixa. Confirma que copiaste o URL que termina em /exec.'); }
+  if (!j.ok) throw new Error(j.error || 'O script devolveu um erro.');
+  return j;
+}
+
+function computePush() {
+  const recs = buildRecords();
+  const push = [];
+  recs.forEach((r) => { const b = LINK.base[r.id]; if (!b || b.j !== r.json) push.push({ id: r.id, kind: r.kind, data: r.data }); });
+  Object.keys(LINK.base).forEach((id) => { const b = LINK.base[id]; if (b && b.j !== null && !recs.has(id)) push.push({ id, kind: b.k, deleted: true }); });
+  return push;
+}
+const pendingCount = () => (linked() && LINK.init && LINK.role === 'org' ? computePush().length : 0);
+
+async function syncNow(opts = {}) {
+  if (!LINK.url || !LINK.key) return;
+  if (SYNC.busy) { SYNC.queued = true; return; }
+  SYNC.busy = true; paintSync('busy');
+  try {
+    const wantSheet = opts.sheet || !LINK.sheetAt || Date.now() - LINK.sheetAt > 60000;
+    const push = LINK.init && LINK.role === 'org' ? computePush() : [];
+    const res = await api({ action: 'sync', since: LINK.since || 0, push, sheet: wantSheet });
+    const firstTime = !LINK.init;
+    LINK.role = res.role; LINK.file = res.file;
+    const pushed = new Set(push.map((p) => p.id));
+    push.forEach((p) => { LINK.base[p.id] = { k: p.kind, j: p.deleted ? null : JSON.stringify(p.data) }; });
+    const local = LINK.init ? buildRecords() : null;
+    const incoming = res.records.filter((r) => {
+      if (pushed.has(r.id)) return false;
+      if (local) { const l = local.get(r.id); const b = LINK.base[r.id]; if (l && b && l.json !== b.j) return false; } // alterado aqui entretanto: fica o nosso
+      return true;
+    });
+    applyRecords(incoming);
+    res.records.filter((r) => !pushed.has(r.id)).forEach((r) => { LINK.base[r.id] = { k: r.kind, j: r.deleted ? null : JSON.stringify(r.data) }; });
+    LINK.since = res.serverTime || LINK.since;
+    if (res.sheet) { mergeSheet(res.sheet); LINK.sheetAt = Date.now(); }
+    LINK.init = true; LINK.lastOk = Date.now(); LINK.lastErr = '';
+    saveLink(); saveLocal();
+    if (!document.querySelector('#sheet:not([hidden])')) render(); else paintSync();
+    if (firstTime && LINK.role === 'org' && computePush().length) SYNC.queued = true;
+  } catch (e) {
+    LINK.lastErr = e.message && !/Failed to fetch|NetworkError|Load failed/i.test(e.message) ? e.message : 'Sem ligação. As alterações ficam guardadas e seguem quando houver rede.';
+    saveLink(); paintSync();
+  } finally {
+    SYNC.busy = false;
+    if (SYNC.queued) { SYNC.queued = false; setTimeout(() => syncNow(), 300); }
+  }
+}
+
+function scheduleSync() {
+  if (!linked() || LINK.role !== 'org') return;
+  clearTimeout(SYNC.timer);
+  SYNC.timer = setTimeout(() => syncNow(), 1200);
+  paintSync();
+}
+
+function startPolling() {
+  clearInterval(SYNC.poll);
+  SYNC.poll = setInterval(() => { if (document.visibilityState === 'visible' && LINK.url) syncNow(); }, 20000);
+  document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible' && LINK.url) syncNow(); });
+  window.addEventListener('online', () => { if (LINK.url) syncNow(); });
+}
+
+function syncLabel() {
+  if (!LINK.url) return null;
+  if (SYNC.busy) return { cls: 'busy', txt: 'A sincronizar…' };
+  if (LINK.lastErr) return { cls: 'bad', txt: LINK.lastErr };
+  const n = pendingCount();
+  if (n) return { cls: 'warn', txt: `${n} alteração(ões) por enviar` };
+  if (!LINK.lastOk) return { cls: 'warn', txt: 'Ainda não sincronizou' };
+  const s = Math.round((Date.now() - LINK.lastOk) / 1000);
+  return { cls: 'ok', txt: `Google Sheets · ${s < 60 ? 'agora' : `há ${Math.round(s / 60)} min`}${readOnly() ? ' · só leitura' : ''}` };
+}
+function syncChip() {
+  const l = syncLabel();
+  if (!l) return '';
+  return `<button type="button" class="syncchip ${l.cls}" data-act="sync-now" title="${esc(l.txt)}"><span class="dot" aria-hidden="true"></span><span class="t">${esc(l.cls === 'bad' ? 'Sem ligação' : l.txt)}</span></button>`;
+}
+function paintSync() { $$('.syncchip').forEach((el) => { el.outerHTML = syncChip(); }); const st = $('#linkStatus'); if (st) st.innerHTML = linkStatusHTML(); }
+
+function linkStatusHTML() {
+  const l = syncLabel();
+  if (!l) return '<p class="muted">Não ligado. Os dados ficam só neste telemóvel.</p>';
+  return `<p class="linkstate ${l.cls}"><span class="dot"></span>${esc(l.txt)}</p>
+    ${LINK.file ? `<p class="muted small">Ficheiro: <b>${esc(LINK.file)}</b> · acesso: ${LINK.role === 'org' ? 'organizador (lê e escreve)' : 'só leitura'}</p>` : ''}`;
+}
+
+async function connect(url, key) {
+  url = String(url || '').trim(); key = String(key || '').trim();
+  if (!/^https:\/\/script\.google(usercontent)?\.com\//.test(url)) throw new Error('O link tem de ser o da aplicação Web do Apps Script (https://script.google.com/…/exec).');
+  if (!key) throw new Error('Escreve a chave.');
+  if (!window.__PWA__) throw new Error('Esta pré-visualização não consegue falar com o Google. Liga a partir da app publicada no GitHub Pages.');
+  const prev = { ...LINK };
+  LINK = { url, key, role: '', file: '', since: 0, base: {}, init: false, lastOk: 0, lastErr: '', sheetAt: 0 };
+  try {
+    const r = await api({ action: 'ping' });
+    LINK.role = r.role; LINK.file = r.file;
+    saveLink();
+    await syncNow({ sheet: true });
+    return r;
+  } catch (e) {
+    LINK = prev; saveLink();
+    throw e;
+  }
+}
+
+function disconnect() {
+  LINK = { url: '', key: '', role: '', file: '', since: 0, base: {}, init: false, lastOk: 0, lastErr: '', sheetAt: 0 };
+  saveLink();
+  S.sheet = null;
+}
+
+/* ?sheet=…&key=… no link da app liga automaticamente (link partilhado entre organizadores) */
+function linkFromUrl() {
+  try {
+    const q = new URLSearchParams(location.search);
+    const url = q.get('sheet'), key = q.get('key');
+    if (!url || !key) return null;
+    history.replaceState(null, '', location.pathname + location.hash);
+    return { url, key };
+  } catch (e) { return null; }
+}
+
+/* Escrever um torneio (ou despesa/receita geral) no Sheets */
+async function writeToSheet(tid, moveId) {
+  const P = sheetPayload(tid, moveId);
+  const preLines = excelCurrent();
+  const item = tid ? tourById(tid) : S.moves.find((m) => m.id === moveId);
+  const oldSnap = item.launched?.snap;
+  const res = await api({ action: 'apply', ...P.req });
+  markWritten(tid, moveId, P.want, res);
+  // Verificação: o Sheets mostra o que a app esperava?
+  const newSnap = item.launched.snap;
+  const dLines = {}, dFunds = {};
+  const fd = (snap) => { const o = {}; if (!snap) return o; Object.entries(snap.lines).forEach(([l, v]) => { const f = lineFund(l); o[f] = r2((o[f] || 0) + v); }); snap.exp.forEach((x) => { const f = catById(x.catId)?.fundId; o[f] = r2((o[f] || 0) - x.value); }); return o; };
+  new Set([...Object.keys(newSnap.lines), ...Object.keys(oldSnap?.lines || {})]).forEach((l) => { dLines[l] = r2((newSnap.lines[l] || 0) - (oldSnap?.lines?.[l] || 0)); });
+  const nf = fd(newSnap), of = fd(oldSnap);
+  new Set([...Object.keys(nf), ...Object.keys(of)]).forEach((f) => { dFunds[f] = r2((nf[f] || 0) - (of[f] || 0)); });
+  const after = excelCurrent();
+  const checks = [];
+  Object.entries(dLines).filter(([, v]) => v).forEach(([l, v]) => { const exp = r2(preLines.lines[l] + v); checks.push({ name: lineById(l)?.name, expected: exp, got: after.lines[l], ok: Math.abs(exp - after.lines[l]) < EPS }); });
+  Object.entries(dFunds).filter(([, v]) => v).forEach(([f, v]) => { const exp = r2(preLines.funds[f] + v); checks.push({ name: 'Saldo ' + fundById(f)?.name, expected: exp, got: after.funds[f], ok: Math.abs(exp - after.funds[f]) < EPS }); });
+  UI.report = { id: tid || moveId, res, checks, at: Date.now() };
+  saveLocal();
+  scheduleSync();
+  return UI.report;
 }
 
 /* Caixa BBPT — interface */
@@ -936,10 +1347,11 @@ let UI = { tab: 'torneios', tid: null, tTab: 'checkin', q: '', pq: '', withPlaye
 let DL = null; // capacidade de downloads quando a app corre dentro do Claude
 
 function load() {
-  try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw); if (s && s.version === 2) return s; } } catch (e) { /* sem armazenamento */ }
-  return seed();
+  try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw); if (s && s.version >= 2) return migrate(s); } } catch (e) { /* sem armazenamento */ }
+  return migrate(seed());
 }
-function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* sem armazenamento */ } }
+function saveLocal() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* sem armazenamento */ } }
+function save() { saveLocal(); if (typeof scheduleSync === 'function') scheduleSync(); }
 function saveUI() { try { localStorage.setItem(KEY + '-ui', JSON.stringify({ tab: UI.tab, tid: UI.tid, tTab: UI.tTab, withPlayers: UI.withPlayers })); } catch (e) { /* */ } }
 function loadUI() { try { const u = JSON.parse(localStorage.getItem(KEY + '-ui') || 'null'); if (u) Object.assign(UI, u); } catch (e) { /* */ } }
 
@@ -1039,7 +1451,7 @@ function vResumo() {
   const people = Object.keys(C.P).filter((pid) => Math.abs(C.P[pid].held) >= EPS);
   const corrente = r2(S.funds.reduce((s, f) => s + (cur.funds[f.id] || 0), 0));
   return `
-  <header class="top"><div><p class="eyebrow">Finanças Beyblade PT · Lisboa</p><h1>Caixa</h1></div><p class="today">${fmtDate(todayISO())}</p></header>
+  <header class="top"><div><p class="eyebrow">Finanças Beyblade PT · Lisboa</p><h1>Caixa</h1></div><div class="top-side">${syncChip()}<p class="today">${fmtDate(todayISO())}</p></div></header>
   <section class="block"><h2>Saldos no Excel</h2>
     <div class="funds">${S.funds.map((f) => `<article class="fundcard"><p class="fc-acc">${esc(accById(f.accountId)?.name || '')}</p><h3>${esc(f.name)}</h3><p class="fc-big">${eur(cur.funds[f.id] || 0)}</p></article>`).join('')}
     <article class="fundcard total"><p class="fc-acc">Excel</p><h3>Saldo Corrente</h3><p class="fc-big">${eur(corrente)}</p></article></div>
@@ -1069,13 +1481,15 @@ function tourStatus(t) {
   if (t.example) return chip('exemplo', 'soft');
   const changed = alertsFor(t.id).some((a) => a.txt.startsWith('Este torneio mudou'));
   if (changed) return chip('alterado depois de lançado', 'bad');
-  return t.launched ? chip('lançado no Excel', 'ok') : chip('por lançar', 'warn');
+  if (linked() && t.launched?.by === 'sheet' && sheetPayload(t.id).summary.length) return chip('por escrever no Sheets', 'warn');
+  return t.launched ? chip(t.launched.by === 'sheet' ? 'escrito no Sheets' : 'lançado no Excel', 'ok') : chip(linked() ? 'por escrever no Sheets' : 'por lançar', 'warn');
 }
 
 function vTours() {
   const ts = S.tournaments.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   return `
-  <header class="top"><div><p class="eyebrow">Check-in e contas</p><h1>Torneios</h1></div><button type="button" class="btn primary" data-act="new-tour">Novo torneio</button></header>
+  <header class="top"><div><p class="eyebrow">Check-in e contas</p><h1>Torneios</h1></div><div class="top-side">${syncChip()}<button type="button" class="btn primary editonly" data-act="new-tour">Novo torneio</button></div></header>
+  ${readOnly() ? '<p class="banner">Estás em modo de leitura: vês tudo o que os organizadores registam, mas não podes alterar.</p>' : ''}
   ${ts.length ? `<ul class="cards">${ts.map((t) => {
     const C = compute(t.id);
     const open = Object.keys(C.P).some((pid) => Math.abs(C.P[pid].held) >= EPS && pid !== S.settings.treasurerId);
@@ -1096,9 +1510,9 @@ function vTour() {
   const body = { checkin: vCheckin, pagamentos: vPayments, acertos: vSettle, excel: vExcel, relatorio: vReport }[UI.tTab] || vCheckin;
   return `
   <header class="top ev-top">
-    <button type="button" class="link back" data-act="back">‹ Torneios</button>
+    <div class="ev-nav"><button type="button" class="link back" data-act="back">‹ Torneios</button>${syncChip()}</div>
     <div class="ev-title"><p class="eyebrow">${fmtDate(t.date)} · ${esc(typeById(t.typeId)?.name || 'Torneio')} · organiza ${esc(pn(t.organizerId))}</p><h1>${esc(t.name)}</h1></div>
-    <div class="ev-tools">${tourStatus(t)}<button type="button" class="btn small ghost" data-act="edit-tour" data-id="${t.id}">Editar</button></div>
+    <div class="ev-tools">${tourStatus(t)}${t.sheetWeek && sheetComp(t.sheetTab) ? chip(`${t.sheetTab} · ${t.sheetWeek.replace(/^./, (c) => c.toUpperCase())}`, 'soft') : ''}<button type="button" class="btn small ghost editonly" data-act="edit-tour" data-id="${t.id}">Editar</button></div>
   </header>
   ${t.example ? `<p class="banner">${esc(t.notes)}</p>` : ''}
   <section class="stats">
@@ -1296,7 +1710,8 @@ function moveForm(kind, move, preset = {}) {
       <div class="row2"><label class="field">Data<input type="date" name="date" value="${esc(m.date)}"></label>
       <label class="field">Torneio<select name="tid">${tourOpts(m.tid)}</select></label></div>
       ${kind !== 'despesa' && kind !== 'receita' ? `<label class="field">Notas<input name="desc" value="${esc(m.desc)}" placeholder="opcional"></label>` : ''}
-      ${isGeneral && move ? `<div class="bar wrap">${move.launched ? `<span class="muted small">Lançado no Excel em ${fmtDate(move.launched.date)}</span><button type="button" class="btn small ghost" data-act="unlaunch-move" data-id="${move.id}">Desmarcar</button>` : `<button type="button" class="btn small" data-act="launch-move" data-id="${move.id}">Marcar como lançado no Excel</button>`}</div>${excelBlock(excelPlan(null, move.id))}` : ''}`,
+      ${isGeneral && move && linked() ? sheetBox(null, move.id) : ''}
+      ${isGeneral && move && !linked() ? `<div class="bar wrap">${move.launched ? `<span class="muted small">Lançado no Excel em ${fmtDate(move.launched.date)}</span><button type="button" class="btn small ghost" data-act="unlaunch-move" data-id="${move.id}">Desmarcar</button>` : `<button type="button" class="btn small" data-act="launch-move" data-id="${move.id}">Marcar como lançado no Excel</button>`}</div>${excelBlock(excelPlan(null, move.id))}` : ''}`,
     onMount: (form) => {
       const upd = () => {
         const fd = new FormData(form);
@@ -1392,10 +1807,38 @@ function excelBlock(p) {
   </section>`;
 }
 
+function sheetBox(tid, moveId) {
+  if (!linked()) return '';
+  const P = sheetPayload(tid, moveId);
+  const rep = UI.report && UI.report.id === (tid || moveId) ? UI.report : null;
+  const rpt = rep ? `<div class="report-box">
+      <p><b>Escrito no Sheets.</b> ${[rep.res.players && `${rep.res.players} jogador(es) novo(s)`, rep.res.checks && `${rep.res.checks} caixa(s) na semana`, rep.res.months && `${rep.res.months} caixa(s) no mês`, rep.res.extras && `${rep.res.extras} adicional`, rep.res.lines && `${rep.res.lines} linha(s)`, rep.res.despesas && `${rep.res.despesas} despesa(s)`].filter(Boolean).join(' · ') || 'Nada a mudar.'}</p>
+      ${rep.res.notFound?.length ? `<p class="neg">Não encontrei no Sheets: ${esc([...new Set(rep.res.notFound)].join(', '))}. Confirma o nome na USER LIST e volta a escrever.</p>` : ''}
+      ${rep.res.skipped?.length ? `<p class="neg">Não escrevi (célula com fórmula ou valor estranho): ${esc(rep.res.skipped.join(', '))}</p>` : ''}
+      ${(rep.res.warnings || []).map((w) => `<p class="neg">${esc(w)}</p>`).join('')}
+      ${rep.checks.length ? `<ul class="checks">${rep.checks.map((c) => `<li class="${c.ok ? 'pos' : 'neg'}">${c.ok ? '✓' : '✗'} ${esc(c.name)}: ${eur(c.got)}${c.ok ? '' : ` (esperava ${eur(c.expected)})`}</li>`).join('')}</ul>` : ''}
+    </div>` : '';
+  if (readOnly()) return `<section class="block"><h2>Google Sheets</h2><p class="muted">${P.summary.length ? 'Os organizadores ainda não escreveram isto no Sheets.' : '✓ O Sheets já tem tudo.'}</p></section>`;
+  return `<section class="block sheetbox"><h2>Google Sheets</h2>
+    ${rpt}
+    ${P.manual.map((m) => `<p class="alert warn"><span class="dot"></span>${esc(m)}</p>`).join('')}
+    ${P.summary.length ? `<p>A app vai escrever:</p><ul class="todo">${P.summary.map((x) => `<li>${esc(x)}</li>`).join('')}</ul>
+      <button type="button" class="btn primary" data-act="write-sheet" data-tid="${tid || ''}" data-mid="${moveId || ''}">Escrever no Sheets</button>
+      <p class="hint">Só marca caixas, soma na "Contribuição adicional", acrescenta linhas em Despesas e nomes novos na USER LIST. Nunca mexe em fórmulas. Depois relê os saldos e confirma que batem.</p>`
+      : `<p class="allgood">✓ O Sheets já tem tudo${tid ? ' deste torneio' : ''}.</p>`}
+  </section>`;
+}
+
 function vExcel(t) {
   const p = excelPlan(t.id);
   const C = compute(t.id);
   const ready = !C.debtN;
+  if (linked() && !t.example) {
+    return `${!ready ? `<p class="alert warn"><span class="dot"></span>Há ${C.debtN} jogador(es) em dívida. Quem está em dívida não é marcado; quando pagarem, escreve outra vez e a app junta só a diferença.</p>` : ''}
+    ${sheetBox(t.id)}
+    ${excelBlock(p)}
+    <section class="block"><div class="bar wrap"><button type="button" class="btn" data-act="exp-excel" data-id="${t.id}">Exportar CSV</button></div></section>`;
+  }
   return `
   ${t.example ? '<p class="banner">Exemplo: o Excel real já inclui a Semana 5. Não apliques estes valores.</p>' : ''}
   ${t.launched ? `<p class="note">Lançado no Excel em ${fmtDate(t.launched.date)}.</p>` : (!ready ? `<p class="alert warn"><span class="dot"></span>Há ${C.debtN} jogador(es) em dívida. Podes lançar já o que foi pago e voltar a lançar a diferença depois.</p>` : '')}
@@ -1428,13 +1871,14 @@ function vReport(t) {
 
 /* --- Formulário do torneio e partes da inscrição --- */
 function compEditor(comps) {
-  const row = (c) => `<div class="comp-edit" data-key="${esc(c.key)}">
+  const row = (c) => `<div class="comp-edit ${c.kind === 'loja' ? 'is-loja' : ''}" data-key="${esc(c.key)}">
+    <div class="comp-top"><span class="comp-n"></span><button type="button" class="link danger" data-act="rm-comp">Remover parte</button></div>
     <div class="row2"><label class="field">Parte<input name="cl_${c.key}" value="${esc(c.label)}"></label><label class="field">Preço<input name="cp_${c.key}" inputmode="decimal" value="${esc(eurPlain(c.price))}"></label></div>
     <label class="field">Vai para<select name="cd_${c.key}">${S.stores.map((s) => opt('store:' + s.id, s.name + ' (paga-se à loja)', c.kind === 'loja' && c.storeId === s.id)).join('')}${SECTIONS.map((sec) => `<optgroup label="Excel · ${esc(sec)}">${S.lines.filter((l) => l.section === sec).map((l) => opt('line:' + l.id, l.name, c.kind === 'line' && c.lineId === l.id)).join('')}</optgroup>`).join('')}</select></label>
-    <div class="comp-foot"><label class="check"><input type="checkbox" name="cf_${c.key}" ${c.def ? 'checked' : ''}> Marcada por defeito</label><label class="check"><input type="checkbox" name="cm_${c.key}" ${c.monthly ? 'checked' : ''}> Uma vez por mês</label><button type="button" class="link danger" data-act="rm-comp">Remover</button></div>
+    <div class="comp-foot"><label class="check"><input type="checkbox" name="cf_${c.key}" ${c.def ? 'checked' : ''}> Marcada por defeito</label><label class="check"><input type="checkbox" name="cm_${c.key}" ${c.monthly ? 'checked' : ''}> Uma vez por mês</label></div>
   </div>`;
   compEditor.row = row;
-  return `<fieldset class="comps"><legend>Partes de cada inscrição</legend><div id="compList">${comps.map(row).join('')}</div><button type="button" class="btn small" data-act="add-comp">Adicionar parte</button></fieldset>`;
+  return `<fieldset class="comps parts"><legend>Partes de cada inscrição</legend><div id="compList">${comps.map(row).join('')}</div><button type="button" class="btn small" data-act="add-comp">Adicionar parte</button></fieldset>`;
 }
 function readComps(fd, form, old) {
   return $$('.comp-edit', form).map((el) => {
@@ -1445,6 +1889,19 @@ function readComps(fd, form, old) {
     if (dest.startsWith('store:')) { c.kind = 'loja'; c.storeId = dest.slice(6); } else { c.kind = 'line'; c.lineId = dest.slice(5); }
     return c;
   });
+}
+
+function tabOpts(sel) {
+  const tabs = (S.sheet?.comps || []).map((c) => c.tab);
+  if (sel && !tabs.some((x) => normName(x) === normName(sel))) tabs.unshift(sel);
+  return opt('', '— sem aba —', !sel) + tabs.map((x) => opt(x, x + ((S.sheet?.comps || []).find((c) => c.tab === x)?.hidden ? ' (oculta)' : ''), normName(x) === normName(sel))).join('');
+}
+function weekOpts(tab, sel) {
+  const c = sheetComp(tab);
+  if (!c) return opt('', tab ? 'Aba não encontrada no Sheets' : '—', true);
+  const usedBy = {};
+  S.tournaments.filter((t) => !t.example && normName(t.sheetTab) === normName(tab) && t.sheetWeek).forEach((t) => { usedBy[t.sheetWeek] = t.name; });
+  return opt('', '— escolher —', !sel) + c.weeks.map((w) => opt(w.key, `${w.label} · ${w.players ? w.players + ' jogadores' : 'vazia'}${usedBy[w.key] ? ' · app: ' + usedBy[w.key] : ''}`, w.key === sel)).join('');
 }
 
 function tourForm(t) {
@@ -1461,9 +1918,16 @@ function tourForm(t) {
       <div class="row2"><label class="field">Data<input type="date" name="date" value="${esc(d.date)}"></label>
       <label class="field">Quem organiza<select name="organizerId">${orgOpts(d.organizerId)}</select></label></div>
       <label class="field">Nome<input name="name" value="${esc(d.name || autoName(d.typeId, d.date))}" data-auto="${t ? '' : '1'}"></label>
+      ${S.sheet ? `<div class="row2"><label class="field">Aba no Sheets<select name="sheetTab">${tabOpts(d.sheetTab || typeById(d.typeId)?.sheetTab)}</select></label>
+      <label class="field">Semana no Sheets<select name="sheetWeek" id="weekSel">${weekOpts(d.sheetTab || typeById(d.typeId)?.sheetTab, t ? d.sheetWeek : suggestWeek(typeById(d.typeId)?.sheetTab))}</select></label></div>
+      <p class="hint">A app sugere a primeira semana vazia. É nessa coluna que os pagamentos vão ser marcados.</p>` : ''}
       ${t ? compEditor(t.comps) + '<p class="hint">Mudar as partes aqui só afeta este torneio. Para mudar todos os futuros, edita o tipo em Mais.</p>' : '<p class="hint">Os preços e linhas do Excel vêm do tipo de torneio (Mais › Tipos de torneio). Podes ajustá-los depois em Editar.</p>'}
       ${t ? '<p class="hint">Apagar o torneio apaga também o check-in e os movimentos dele.</p>' : ''}`,
     onMount: (form) => {
+      if (form.elements.sheetTab) {
+        form.elements.typeId.addEventListener('change', () => { const tab = typeById(form.elements.typeId.value)?.sheetTab || ''; form.elements.sheetTab.innerHTML = tabOpts(tab); $('#weekSel').innerHTML = weekOpts(tab, suggestWeek(tab)); });
+        form.elements.sheetTab.addEventListener('change', () => { const tab = form.elements.sheetTab.value; $('#weekSel').innerHTML = weekOpts(tab, (t && t.sheetTab === tab) ? t.sheetWeek : suggestWeek(tab)); });
+      }
       if (t) return;
       const nameI = form.elements.name;
       nameI.addEventListener('input', () => { nameI.dataset.auto = ''; });
@@ -1479,10 +1943,11 @@ function tourForm(t) {
         const gone = t.comps.filter((c) => !comps.some((x) => x.key === c.key) && S.entries.some((e) => e.tid === t.id && e.amt[c.key] != null));
         if (gone.length) return `"${gone[0].label}" tem valores no check-in. Desmarca-a nos jogadores antes de a remover.`;
         Object.assign(t, { name, date: fd.get('date'), typeId: fd.get('typeId'), organizerId: fd.get('organizerId'), comps });
+        if (fd.has('sheetTab')) Object.assign(t, { sheetTab: fd.get('sheetTab') || '', sheetWeek: fd.get('sheetWeek') || '' });
       } else {
         const type = typeById(fd.get('typeId'));
         const id = uid('t');
-        S.tournaments.push({ id, name, date: fd.get('date'), typeId: type.id, organizerId: fd.get('organizerId'), comps: JSON.parse(JSON.stringify(type.comps)), notes: '', example: false, launched: null });
+        S.tournaments.push({ id, name, date: fd.get('date'), typeId: type.id, organizerId: fd.get('organizerId'), comps: JSON.parse(JSON.stringify(type.comps)), notes: '', example: false, launched: null, sheetTab: fd.has('sheetTab') ? fd.get('sheetTab') : type.sheetTab || '', sheetWeek: fd.get('sheetWeek') || '' });
         UI.tid = id; UI.tTab = 'checkin'; UI.tab = 'torneios';
       }
       return null;
@@ -1506,7 +1971,7 @@ function playerRows(list, month) {
   return `${list.map((p) => {
     const paid = monthlyPaidElsewhere(p.id, month);
     const n = S.entries.filter((e) => e.playerId === p.id && !isExample(e.tid)).length;
-    return `<li><button type="button" class="row" data-act="edit-player" data-id="${p.id}"><span class="row-main"><b>${esc(p.name)}</b><span class="muted small">${n} torneio(s) na app</span></span><span class="row-side">${paid ? chip('✓ ' + monthName(month).slice(0, 3), 'ok') : chip('— ' + monthName(month).slice(0, 3))}${p.org ? chip('organizador', 'soft') : ''}</span></button></li>`;
+    return `<li><button type="button" class="row" data-act="edit-player" data-id="${p.id}"><span class="row-main"><b>${esc(p.name)}</b><span class="muted small">${n} torneio(s) na app</span></span><span class="row-side">${paid ? chip('✓ ' + monthName(month).slice(0, 3), 'ok') : chip('— ' + monthName(month).slice(0, 3))}${p.org ? chip('organizador', 'soft') : ''}${p.inSheet === false ? chip('novo · ainda não está no Sheets', 'warn') : ''}</span></button></li>`;
   }).join('') || '<li class="muted pad">Nenhum jogador com esse nome.</li>'}`;
 }
 
@@ -1548,20 +2013,29 @@ function vMais() {
   const cur = excelCurrent();
   const general = S.moves.filter((m) => !m.tid);
   return `
-  <header class="top"><div><p class="eyebrow">Definições</p><h1>Mais</h1></div></header>
-  <section class="block"><h2>Tesoureiro</h2>
+  <header class="top"><div><p class="eyebrow">Definições</p><h1>Mais</h1></div>${syncChip()}</header>
+  <section class="block linkbox"><h2>Google Sheets</h2>
+    <div id="linkStatus">${linkStatusHTML()}</div>
+    ${LINK.url ? `<div class="bar wrap"><button type="button" class="btn" data-act="sync-now" data-sheet="1">Sincronizar agora</button>${LINK.role === 'org' ? '<button type="button" class="btn" data-act="link-share">Copiar link de ligação</button>' : ''}<button type="button" class="btn ghost danger" data-act="link-off">Desligar</button></div>
+      <p class="hint">O link de ligação abre a app já ligada ao ficheiro. Envia-o só a organizadores. Para jogadores, troca no link a chave pela chave de leitura.</p>`
+    : `<label class="field">Link do script (termina em /exec)<input id="linkUrl" type="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec"></label>
+      <label class="field">Chave<input id="linkKey" type="password" autocomplete="off" placeholder="chave de organizador ou de leitura"></label>
+      <button type="button" class="btn primary" data-act="link-on">Ligar</button>
+      <p class="hint">Com a ligação, todos os organizadores veem os mesmos torneios, a lista de jogadores e os meses pagos vêm do ficheiro, e a app escreve o check-in no Sheets por ti.</p>`}
+  </section>
+  <section class="block editonly"><h2>Tesoureiro</h2>
     <label class="field">Dono das contas da org (recebe o dinheiro no fim)<select id="treasurer">${opt('', '— escolher —', !S.settings.treasurerId)}${orgOpts(S.settings.treasurerId)}</select></label>
   </section>
-  <section class="block"><h2>Movimentos gerais</h2>
+  <section class="block editonly"><h2>Movimentos gerais</h2>
     <p class="hint">Receitas, despesas e depósitos que não pertencem a um torneio (ex.: doações, estádios comprados, danos).</p>
     <div class="bar wrap">${['despesa', 'receita', 'deposito', 'envio', 'reembolso'].map((k) => `<button type="button" class="btn small" data-act="new-move" data-kind="${k}" data-general="1">${MOVE_LABEL[k]}</button>`).join('')}</div>
     ${moveRows(general)}
   </section>
-  <section class="block"><h2>Tipos de torneio</h2>
+  <section class="block editonly"><h2>Tipos de torneio</h2>
     <ul class="kv">${S.types.map((x) => `<li><button type="button" class="linkrow" data-act="edit-type" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted small">${x.comps.map((c) => `${esc(c.label)} ${eurPlain(c.price)}`).join(' · ')}</span></button></li>`).join('')}</ul>
     <button type="button" class="btn small" data-act="new-type">Adicionar tipo</button>
   </section>
-  <section class="block"><h2>Excel e contas</h2>
+  <section class="block editonly"><h2>Excel e contas</h2>
     <p class="hint">Valores base (o que o Excel tinha quando começaste a usar a app). Os torneios marcados como lançados somam-se a estes.</p>
     <h3 class="sub">Linhas de receita</h3>
     <ul class="kv">${S.lines.map((l) => `<li><button type="button" class="linkrow" data-act="edit-line" data-id="${l.id}"><span>${esc(l.name)} <small class="muted">${esc(l.section)} · ${esc(fundById(l.fundId)?.name || '')}</small></span><span>${eur(cur.lines[l.id] || 0)}</span></button></li>`).join('')}</ul>
@@ -1579,7 +2053,7 @@ function vMais() {
     <ul class="kv">${S.stores.map((s) => `<li><button type="button" class="linkrow" data-act="edit-store" data-id="${s.id}"><span>${esc(s.name)}</span><span></span></button></li>`).join('')}</ul>
     <button type="button" class="btn small" data-act="new-store">Adicionar loja</button>
   </section>
-  <section class="block"><h2>Dados</h2>
+  <section class="block editonly"><h2>Dados</h2>
     <p class="hint">Os dados ficam só neste telemóvel. Faz uma cópia de segurança de vez em quando.</p>
     <div class="bar wrap">
       <button type="button" class="btn" data-act="exp-backup">Cópia de segurança (JSON)</button>
@@ -1669,7 +2143,10 @@ function typeForm(ty) {
   openSheet({
     title: ty ? 'Tipo de torneio' : 'Novo tipo de torneio',
     del: ty && !used ? () => { S.types = S.types.filter((x) => x.id !== ty.id); } : null,
-    body: `<label class="field">Nome<input name="name" value="${esc(ty?.name || '')}" placeholder="ex.: Liga Fénix Negra"></label>${compEditor(comps)}
+    body: `<label class="field">Nome<input name="name" value="${esc(ty?.name || '')}" placeholder="ex.: Liga Fénix Negra"></label>
+      ${S.sheet ? `<label class="field">Aba no Sheets<select name="sheetTab">${tabOpts(ty?.sheetTab || '')}</select></label>` : `<label class="field">Aba no Sheets<input name="sheetTab" value="${esc(ty?.sheetTab || '')}" placeholder="ex.: Liga Fénix Negra - Season 2"></label>`}
+      <p class="hint">Quando começar uma Season nova, cria a aba no Sheets e escolhe-a aqui.</p>
+      ${compEditor(comps)}
       <p class="hint">A Liga e a Semanal são exclusivas: um tipo de liga tem "Liga", um evento casual tem "Semanal estádios". A mensal fica marcada só para quem ainda não pagou nesse mês.</p>`,
     onSubmit: (fd, form) => {
       const name = String(fd.get('name')).trim();
@@ -1677,7 +2154,8 @@ function typeForm(ty) {
       const cs = readComps(fd, form, comps);
       if (!cs.length) return 'Adiciona pelo menos uma parte.';
       if (cs.some((c) => !c.label)) return 'Cada parte precisa de nome.';
-      if (ty) Object.assign(ty, { name, comps: cs }); else S.types.push({ id: uid('t'), name, comps: cs });
+      const sheetTab = String(fd.get('sheetTab') || '').trim();
+      if (ty) Object.assign(ty, { name, comps: cs, sheetTab }); else S.types.push({ id: uid('t'), name, comps: cs, sheetTab });
       return null;
     },
   });
@@ -1690,6 +2168,7 @@ function render() {
   const main = $('#main');
   main.innerHTML = UI.tab === 'resumo' ? vResumo() : UI.tab === 'torneios' ? (UI.tid ? vTour() : vTours()) : UI.tab === 'jogadores' ? vPlayers() : vMais();
   $$('.tabbar button').forEach((b) => b.setAttribute('aria-current', b.dataset.tab === UI.tab ? 'page' : 'false'));
+  document.body.classList.toggle('readonly', readOnly());
   const ib = $('#installBtn'); if (ib && window.__installPrompt) ib.hidden = false;
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { if (keep.s != null) el.setSelectionRange(keep.s, keep.s); } catch (e) { /* */ } } }
   saveUI();
@@ -1708,7 +2187,34 @@ function onClick(ev) {
   if (!t) return;
   const act = t.dataset.act, id = t.dataset.id;
   const tour = tourById(UI.tid);
+  const SAFE = ['tab', 'close-sheet', 'open-tour', 'open-excel', 'back', 't-tab', 'copy', 'exp-checkin', 'exp-excel', 'exp-tour', 'exp-backup', 'copy-backup', 'install', 'sync-now', 'link-on', 'link-off', 'link-share'];
+  if (readOnly() && !SAFE.includes(act)) { toast('Modo de leitura: só os organizadores podem alterar.'); return; }
   switch (act) {
+    case 'sync-now': syncNow({ sheet: true }); break;
+    case 'link-on': {
+      t.disabled = true; t.textContent = 'A ligar…';
+      connect($('#linkUrl').value, $('#linkKey').value)
+        .then((r) => { toast(`Ligado a ${r.file} (${r.role === 'org' ? 'organizador' : 'só leitura'})`); render(); })
+        .catch((e) => { toast(e.message); if (t.isConnected) { t.disabled = false; t.textContent = 'Ligar'; } });
+      break;
+    }
+    case 'link-off':
+      if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'Toca outra vez para desligar'; setTimeout(() => { if (t.isConnected) { delete t.dataset.armed; t.textContent = 'Desligar'; } }, 3500); break; }
+      disconnect(); saveLocal(); render(); toast('Desligado do Google Sheets'); break;
+    case 'link-share': {
+      const base = location.protocol.startsWith('http') && !/claude|claudeusercontent/.test(location.host) ? location.origin + location.pathname : 'https://<o-teu-utilizador>.github.io/caixa-bbpt/';
+      copyText(`${base}?sheet=${encodeURIComponent(LINK.url)}&key=${encodeURIComponent(LINK.key)}`, 'Link copiado. Envia só a organizadores.');
+      break;
+    }
+    case 'write-sheet': {
+      if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'Toca outra vez para escrever'; setTimeout(() => { if (t.isConnected) { delete t.dataset.armed; t.textContent = 'Escrever no Sheets'; } }, 4000); break; }
+      t.disabled = true; t.textContent = 'A escrever…';
+      const inSheet = !$('#sheet').hidden;
+      writeToSheet(t.dataset.tid || null, t.dataset.mid || null)
+        .then((r) => { const bad = r.checks.filter((c) => !c.ok).length; toast(bad ? `Escrito, mas ${bad} valor(es) não batem. Vê o relatório.` : 'Escrito no Sheets e confirmado ✓'); if (inSheet) closeSheet(); render(); })
+        .catch((e) => { toast(e.message.includes('fetch') ? 'Sem ligação. Tenta outra vez quando houver rede.' : e.message); if (t.isConnected) { t.disabled = false; t.textContent = 'Escrever no Sheets'; } });
+      break;
+    }
     case 'tab': if (UI.tab === t.dataset.tab && UI.tab === 'torneios') UI.tid = null; UI.tab = t.dataset.tab; render(); window.scrollTo(0, 0); break;
     case 'close-sheet': closeSheet(); break;
     case 'open-tour': UI.tid = id; UI.tTab = 'checkin'; UI.q = ''; render(); window.scrollTo(0, 0); break;
@@ -1813,12 +2319,18 @@ async function doImport(mode, btn) {
 function boot() {
   S = load();
   loadUI();
+  loadLink();
+  const fromUrl = linkFromUrl();
   document.addEventListener('click', onClick);
   document.addEventListener('input', onInput);
   document.addEventListener('change', onChange);
   document.addEventListener('keydown', onKey);
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.__installPrompt = e; const b = $('#installBtn'); if (b) b.hidden = false; });
+  document.body.classList.toggle('readonly', readOnly());
   render();
+  startPolling();
+  if (fromUrl) connect(fromUrl.url, fromUrl.key).then((r) => toast(`Ligado a ${r.file}`)).catch((e) => toast(e.message));
+  else if (LINK.url) syncNow({ sheet: true });
   if ('serviceWorker' in navigator && location.protocol === 'https:' && window.__PWA__) navigator.serviceWorker.register('./sw.js').catch(() => { /* sem modo offline */ });
   if (!window.__PWA__ && window.claude && typeof window.claude.use === 'function') window.claude.use('downloads').then((d) => { DL = d; }).catch(() => { /* */ });
 }

@@ -59,7 +59,43 @@ Instalar: no iPhone, Safari › Partilhar › Adicionar ao ecrã principal. No A
 
 Para atualizar, substitui os ficheiros e muda `VERSION` no topo do `sw.js`. Os dados de quem já usa a app mantêm-se.
 
-## Partilhar entre organizadores
+## Ligar ao Google Sheets (recomendado)
+
+Com a ligação, todos os organizadores veem os mesmos torneios em tempo real. A lista de jogadores, os meses pagos e os saldos vêm do ficheiro de Finanças, e a app escreve o check-in no Sheets por ti.
+
+### 1. Instalar o script no ficheiro (uma vez)
+1. Abre o ficheiro no Google Sheets (primeiro a cópia `_sandbox`).
+2. **Extensões › Apps Script**. Apaga o que lá estiver e cola o conteúdo de `apps-script/Code.gs`.
+3. No topo, muda as duas chaves:
+   - `ORG_KEY`: para organizadores (lêem e escrevem);
+   - `READ_KEY`: para quem só pode ver (ex.: jogadores).
+   Usa frases difíceis de adivinhar, por exemplo `fenix-negra-2026-x7k2`.
+4. Guarda (ícone da disquete). Para confirmar, escolhe a função `testarLeitura` e carrega em **Executar**: o registo mostra os jogadores, as linhas do Budget, os saldos e as semanas de cada aba.
+5. **Implementar › Nova implementação** › engrenagem › **Aplicação Web**.
+   - Executar como: **Eu**
+   - Quem tem acesso: **Qualquer pessoa**
+6. **Implementar**, autoriza com a tua conta Google e copia o **URL da aplicação Web** (termina em `/exec`).
+
+### 2. Ligar a app
+Na app: **Mais › Google Sheets** › cola o URL e a chave › **Ligar**. Depois, em **Copiar link de ligação**, tens um link que já abre a app ligada. Envia-o só a organizadores.
+
+### 3. O que o script escreve
+- Caixas da semana na aba da competição (Pagamento loja / Pagamento liga) e a data no título da semana.
+- Caixas do mês em Users/Estadios e valores em "Contribuição adicional".
+- Nomes novos nas linhas vazias da USER LIST.
+- Linhas novas na tabela Despesas e somas em linhas de receita que não são fórmulas (ex.: Income Misc).
+- Uma aba escondida "App Caixa" com os dados da app.
+
+Nunca escreve por cima de uma fórmula. Depois de escrever, relê os saldos e a app mostra ✓ ou ✗ para cada valor.
+
+Quem está "em dívida" não é marcado. Quando pagar, muda-o na app e volta a escrever: só vai a diferença.
+
+### Mudar da sandbox para o ficheiro real
+Repete o passo 1 no ficheiro real (com chaves novas) e, na app, **Desligar** e **Ligar** com o URL novo. Antes disso, apaga na app os torneios de teste.
+
+Se mudares o script, faz **Implementar › Gerir implementações › editar › Versão: nova**, para o URL continuar o mesmo.
+
+## Partilhar entre organizadores (sem ligação)
 
 Cada telemóvel tem os seus dados. Quem organizou abre o torneio › Relatório › **Enviar torneio a outro organizador**. O tesoureiro abre Mais › Dados › Importar › **Juntar aos meus dados**. Os jogadores com o mesmo nome juntam-se. Importar outra vez o mesmo torneio atualiza-o.
 
