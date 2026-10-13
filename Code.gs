@@ -3,7 +3,8 @@
  *
  * Instalar (uma vez por ficheiro):
  *  1. No ficheiro do Google Sheets: Extensões › Apps Script.
- *  2. Apaga o que lá estiver, cola este ficheiro inteiro e muda as duas chaves abaixo.
+ *  2. Apaga o que lá estiver, cola este ficheiro inteiro e muda as chaves abaixo
+ *     (uma por organizador + uma de leitura). Usa só letras e números.
  *  3. Guardar › Implementar › Nova implementação › Tipo: Aplicação Web
  *       Executar como: Eu · Quem tem acesso: Qualquer pessoa
  *  4. Autoriza e copia o URL que termina em /exec. Esse URL vai para a app (Mais › Google Sheets).
@@ -17,8 +18,14 @@
  * Nunca escreve por cima de uma fórmula.
  */
 
-// ⚠️ Muda estas duas chaves antes de implementar. Partilha-as só com quem deve ter acesso.
-const ORG_KEY = 'MUDA-ESTA-CHAVE-ORGANIZADORES';
+// ⚠️ Uma chave por organizador. O nome tem de ser igual ao da USER LIST.
+//    A chave é pessoal: é assim que a app sabe quem fez cada alteração.
+//    Para tirar o acesso a alguém, apaga a linha e publica uma versão nova.
+const ORGANIZADORES = {
+  'paparapas': 'MUDA-ESTA-CHAVE',
+  'Hyero': 'MUDA-ESTA-CHAVE',
+};
+// Chave de leitura (ex.: jogadores): vê tudo, não altera nada.
 const READ_KEY = 'MUDA-ESTA-CHAVE-LEITURA';
 
 const TAB_USERS = 'Users/Estadios';      // início do nome da aba
@@ -41,22 +48,28 @@ function doPost(e) {
 
 function handle_(req) {
   try {
-    if (ORG_KEY.indexOf('MUDA-ESTA') === 0 || READ_KEY.indexOf('MUDA-ESTA') === 0) return out_({ ok: false, error: 'O script publicado ainda tem as chaves de exemplo. Muda ORG_KEY e READ_KEY no topo do script e publica uma versão nova (Implementar › Gerir implementações › lápis › Versão: Nova versão).' });
     const key = String(req.key || '').trim();
-    const role = key === ORG_KEY ? 'org' : key === READ_KEY ? 'read' : null;
-    if (!role) return out_({ ok: false, error: 'Chave errada. Confirma letras maiúsculas e minúsculas, e que a versão publicada do script tem esta chave.' });
+    const names = Object.keys(ORGANIZADORES);
+    const who = names.filter(function (n) { return ORGANIZADORES[n] === key; })[0] || '';
+    if (key.indexOf('MUDA-ESTA') === 0) return out_({ ok: false, error: 'Essa chave ainda é a de exemplo. Muda as chaves no topo do script e publica uma versão nova (Implementar › Gerir implementações › lápis › Versão: Nova versão).' });
+    const dup = names.some(function (a, i) { return names.some(function (b, j) { return j > i && ORGANIZADORES[a] === ORGANIZADORES[b]; }); });
+    if (dup) return out_({ ok: false, error: 'Há dois organizadores com a mesma chave no script. Cada um tem de ter a sua.' });
+    const role = who ? 'org' : key && key === READ_KEY ? 'read' : null;
+    if (!role) return out_({ ok: false, error: 'Chave errada. Confirma maiúsculas e minúsculas, e que a versão publicada do script tem esta chave.' });
     const ss = SpreadsheetApp.getActiveSpreadsheet();
     const action = req.action || 'sync';
-    if (action === 'ping') return out_({ ok: true, role: role, file: ss.getName() });
+    if (action === 'ping') return out_({ ok: true, role: role, who: who, organizers: names, file: ss.getName() });
     if (action === 'sync') {
-      const res = { ok: true, role: role, file: ss.getName() };
-      res.records = sync_(ss, role === 'org' ? (req.push || []) : [], Number(req.since || 0), res);
+      const res = { ok: true, role: role, who: who, organizers: names, file: ss.getName() };
+      res.records = sync_(ss, role === 'org' ? (req.push || []) : [], Number(req.since || 0), res, who);
       if (req.sheet) res.sheet = readSheet_(ss);
       return out_(res);
     }
     if (action === 'apply') {
       if (role !== 'org') return out_({ ok: false, error: 'Só organizadores podem escrever no ficheiro.' });
-      return out_(apply_(ss, req));
+      const rep = apply_(ss, req);
+      rep.who = who;
+      return out_(rep);
     }
     return out_({ ok: false, error: 'Ação desconhecida: ' + action });
   } catch (err) {
@@ -70,7 +83,7 @@ function out_(obj) {
 
 /* ---------------- Utilitários ---------------- */
 function norm_(s) {
-  return String(s == null ? '' : s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+  return String(s == null ? '' : s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 }
 function tab_(ss, prefix) {
   const want = norm_(prefix);
@@ -95,7 +108,8 @@ function isFormula_(range) {
 
 /* ---------------- Leitura do ficheiro ---------------- */
 function readSheet_(ss) {
-  const out = { players: [], months: [], budget: { lines: [], saldos: {} }, comps: [] };
+  const yr = String(ss.getName()).match(/\[(\d{4})\]/);
+  const out = { players: [], months: [], budget: { lines: [], saldos: {} }, comps: [], year: yr ? Number(yr[1]) : new Date().getFullYear() };
   const users = tab_(ss, TAB_USERS);
   if (users) {
     const head = users.getRange(4, 1, 1, users.getLastColumn()).getDisplayValues()[0];
@@ -137,6 +151,11 @@ function readSheet_(ss) {
       return [String(r[0]), r[1] instanceof Date ? Utilities.formatDate(r[1], ss.getSpreadsheetTimeZone(), 'yyyy-MM-dd') : String(r[1] || ''), String(r[2] || ''), String(r[3] || ''), Number(r[4]) || 0];
     });
     out.budget.freeDespesas = 28 - out.budget.despesas.length;
+    try {
+      const dv = b.getRange(3, 6).getDataValidation();
+      const vals = dv && dv.getCriteriaValues ? dv.getCriteriaValues()[0] : null;
+      if (Array.isArray(vals)) out.budget.cats = vals.map(String);
+    } catch (err) { /* sem lista de categorias */ }
   }
   ss.getSheets().forEach(function (sh) {
     const lastCol = sh.getLastColumn();
@@ -168,7 +187,7 @@ function appTab_(ss) {
   return sh;
 }
 
-function sync_(ss, push, since, res) {
+function sync_(ss, push, since, res, who) {
   const lock = LockService.getDocumentLock();
   lock.waitLock(20000);
   try {
@@ -183,7 +202,7 @@ function sync_(ss, push, since, res) {
     const appended = [];
     push.forEach(function (p) {
       if (!p || !p.id) return;
-      const row = [String(p.id), String(p.kind || ''), p.deleted ? '' : JSON.stringify(p.data), now, String(p.by || ''), p.deleted ? true : false];
+      const row = [String(p.id), String(p.kind || ''), p.deleted ? '' : JSON.stringify(p.data), now, who || '', p.deleted ? true : false];
       if (index[p.id] != null) { data[index[p.id]] = row; sh.getRange(index[p.id] + 2, 1, 1, 6).setValues([row]); }
       else { index[p.id] = data.length; data.push(row); appended.push(row); }
     });
@@ -291,11 +310,23 @@ function apply_(ss, req) {
     }
 
     // 4. Receitas em linhas do Budget Geral que não são fórmulas (ex.: Income Misc)
+    //    Se a linha não existir e vier com "section", é criada na primeira linha vazia dessa tabela.
     if (req.lines && req.lines.length) {
       const b = tab_(ss, TAB_BUDGET);
       const v = b.getRange(1, 1, 40, 1).getValues();
       req.lines.forEach(function (x) {
-        const i = v.findIndex(function (r) { return norm_(r[0]) === norm_(x.name); });
+        let i = v.findIndex(function (r) { return norm_(r[0]) === norm_(x.name); });
+        if (i < 0 && x.section) {
+          const h = v.findIndex(function (r) { return norm_(r[0]) === norm_(x.section); });
+          if (h >= 0) {
+            for (let k = h + 1; k < v.length; k++) {
+              const a = String(v[k][0] || '').trim();
+              if (/^total/i.test(a) || /^income/i.test(a)) break;
+              if (!a && !isFormula_(b.getRange(k + 1, 2))) { b.getRange(k + 1, 1).setValue(x.name); v[k][0] = x.name; i = k; rep.newLines = (rep.newLines || 0) + 1; break; }
+            }
+            if (i < 0) { rep.warnings.push('Não há linhas vazias em ' + x.section + ' para "' + x.name + '". Acrescenta uma linha dentro da tabela (antes do Total) e volta a escrever.'); return; }
+          }
+        }
         if (i < 0) { rep.notFound.push(x.name); return; }
         const cell = b.getRange(i + 1, 2);
         if (isFormula_(cell)) { rep.skipped.push(x.name + ' (linha com fórmula: atualiza-se sozinha ou tem de ser feita à mão)'); return; }

@@ -379,12 +379,21 @@ p.verify.ok { color: var(--ok); } p.verify.bad { color: var(--bad); }
 .readonly .tog, .readonly .ci-pay button { pointer-events: none; }
 
 #toast { white-space: normal; }
+.settle-row.me { box-shadow: 0 0 0 2px var(--ok); }
+.monthbar { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+.monthnav { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.monthnav .mn { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.monthnav .mn b { text-transform: capitalize; }
+.monthnav .mn b { font-family: var(--f-display); font-size: 1.35rem; }
+.monthnav .icon-btn { width: 40px; height: 40px; font-size: 1.3rem; }
+.monthnav .icon-btn:disabled { opacity: 0.35; }
+.monthbar .mini-seg { align-self: flex-start; }
 
 </style>
 </head>
 <body>
 <main id="main" aria-live="polite"></main><nav class="tabbar" aria-label="Navegação"><button data-act="tab" data-tab="torneios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15.9V18h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 13H8a4 4 0 0 1-4-4V6h3zm-1 4v1a2 2 0 0 0 1 1.7V8zm11 0v2.7A2 2 0 0 0 18 9V8z"/></svg><span>Torneios</span></button><button data-act="tab" data-tab="jogadores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-3.3 0-7 1.7-7 4v3h14v-3c0-2.3-3.7-4-7-4zm8-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm1 2h-.6A5.6 5.6 0 0 1 20 17v3h3v-3c0-2-2.5-3.6-5-4z"/></svg><span>Jogadores</span></button><button data-act="tab" data-tab="resumo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg><span>Resumo</span></button><button data-act="tab" data-tab="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Mais</span></button></nav><div id="sheet" hidden></div><div id="toast" role="status" hidden></div>
-<script>window.__PWA__ = true; window.__VERSION__ = '3.0.2';</script>
+<script>window.__PWA__ = true; window.__VERSION__ = '3.2.0';</script>
 <script>
 /* Caixa BBPT — lógica de contas (sem DOM). O check-in por jogador é a base de tudo. */
 'use strict';
@@ -410,7 +419,7 @@ const pad2 = (n) => String(n).padStart(2, '0');
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
 const monthKey = (d) => String(d || todayISO()).slice(0, 7);
 const monthName = (k) => MONTHS[(+String(k).slice(5, 7) || 1) - 1];
-const slugId = (s) => 'p_' + String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
+const slugId = (s) => 'p_' + String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 
 /* ---------- Dados iniciais ---------- */
 const PLAYER_LIST = ['Lyon', 'paparapas', 'Shaggy_10', 'XAZUS', 'BernaB7999', 'Amostra', 'Bufos (Bufus)', 'KamenXtreme', 'HaalKein', 'Obscythe', 'Pedroosga (Osga)', 'Velos77', 'Zh3l', 'OneZ (Enzo)', 'Suricate_PT (Fábio)', 'Gordinho PT (Bernardo)', 'MiguelBigG', 'mouga', 'diogo_carepo', 'Gonçalo_Galaxy', 'WydeX', 'AC13', 'Zero', 'Gabe0Use / IchiSenka', 'Hyero', 'Juanlamaquina (Benitez)', 'Ordnance', 'lok0game (Carlos)', 'Alpha_Trion', 'Zás', 'Dilion', 'Lua04', 'XDrey', 'iaseru (Ares)', 'Martim99', 'Refilona11', 'Velkayne', 'UKARD (Draku)', 'YellyBun', 'YunoRyu', 'Zensyth', 'ChaoticSwizzler/Swizz101', 'Wez', 'MrSiul', 'Dexter', 'Flaah', 'ElConde', 'Yuto08', 'Ezio', 'Tiaginho', 'Maniac_pt', 'Raulzitoj', 'JCabaco', 'EzioMiauditore', 'Kum4_24 / Manju_24', 'Weightless', 'Heliacoptro', 'Aluber', 'KrisWilliams', 'TheClerk (Sérgio crit)', 'Oioioi', 'Lili999', 'Bonvanda', 'Blind_and_deaf', 'Rinkusuya', 'DEKanger', 'Crunchouille', 'Starboii315', '_medina_', 'Fipi', 'Obryan1', 'Kiruano', 'Bé', 'Gaara', 'Ryuga', 'Embrulha', 'Xernobil', 'Skytribal05', 'Apolo', 'Grim_Reaper_', 'Juju', 'shrupik', 'Ness', 'Izita', 'Josegron'];
@@ -424,6 +433,16 @@ function stdComps(storeId, mainLabel, mainLine) {
     { key: 'mensal', label: 'Mensal estádios', price: 2, kind: 'line', lineId: 'l_mens', def: true, monthly: true },
     { key: 'extra', label: 'Contribuição adicional', price: 1, kind: 'line', lineId: 'l_doa', def: false, extra: true },
   ];
+}
+
+/* Evento fora das lojas (torneio exterior, outra loja): sem aba de competição; a inscrição vai para uma linha própria em Income Misc */
+function ESPECIAL() {
+  return { id: 't_esp', name: 'Evento especial', sheetTab: '', special: true, comps: [
+    { key: 'loja', label: 'Pagamento ao local', price: 0, kind: 'loja', storeId: 's_outro', def: false },
+    { key: 'main', label: 'Inscrição', price: 2, kind: 'line', lineId: '', def: true },
+    { key: 'mensal', label: 'Mensal estádios', price: 2, kind: 'line', lineId: 'l_mens', def: true, monthly: true },
+    { key: 'extra', label: 'Contribuição adicional', price: 1, kind: 'line', lineId: 'l_doa', def: false, extra: true },
+  ] };
 }
 
 function baseState() {
@@ -462,12 +481,13 @@ function baseState() {
       { id: 'c_miscfn', name: 'Misc Liga Fénix', fundId: 'f_fenix' },
       { id: 'c_est', name: 'Estádios e Material', fundId: 'f_est' },
     ],
-    stores: [{ id: 's_fenix', name: 'Loja Fénix' }, { id: 's_critx', name: 'Loja Critical X' }],
+    stores: [{ id: 's_fenix', name: 'Loja Fénix' }, { id: 's_critx', name: 'Loja Critical X' }, { id: 's_outro', name: 'Outro local' }],
     types: [
       { id: 't_lfn', name: 'Liga Fénix Negra', sheetTab: 'Liga Fénix Negra - Season 2', comps: stdComps('s_fenix', 'Liga', 'l_lfn2') },
       { id: 't_cfn', name: 'Evento casual Fénix Negra', sheetTab: 'Fénix Negra - Eventos Casuais', comps: stdComps('s_fenix', 'Semanal estádios', 'l_casfn') },
       { id: 't_lcx', name: 'Liga Critical X', sheetTab: 'Liga Critical X - Season 1', comps: stdComps('s_critx', 'Liga', 'l_lcx1') },
       { id: 't_ccx', name: 'Evento casual Critical X', sheetTab: 'Critical - Eventos Casuais', comps: stdComps('s_critx', 'Semanal estádios', 'l_cascx') },
+      ESPECIAL(),
     ],
     tournaments: [], entries: [], moves: [],
     _ids: { P, H },
@@ -972,10 +992,25 @@ function importData(data, mode) {
 
 
 /* ---------- Ligação ao Google Sheets ---------- */
-const normName = (s) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
+const normName = (s) => String(s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\s+/g, ' ').trim();
 const weekKey = (label) => normName(String(label).split('(')[0]);
 
 /* Atualiza dados antigos guardados no telemóvel */
+function ensureDefaults(st) {
+  if (!st.stores.some((x) => x.id === 's_outro')) st.stores.push({ id: 's_outro', name: 'Outro local' });
+  if (!st.types.some((x) => x.id === 't_esp')) st.types.push(ESPECIAL());
+}
+/* Linha própria do evento especial em Income Misc (é criada no Sheets ao escrever) */
+function ensureMiscLine(name) {
+  const n = String(name || '').trim();
+  if (!n) return '';
+  const hit = S.lines.find((l) => normName(l.name) === normName(n));
+  if (hit) return hit.id;
+  const id = 'l_' + normName(n).replace(/[^a-z0-9]+/g, '_');
+  S.lines.push({ id, section: 'Income Misc', name: n, fundId: S.funds.find((f) => /estadio/.test(normName(f.name)))?.id || S.funds[0]?.id, value: 0 });
+  return id;
+}
+
 function migrate(st) {
   if (!st) return st;
   const seedTypes = baseState().types;
@@ -989,6 +1024,7 @@ function migrate(st) {
     if (!t.sheetTab) t.sheetTab = st.types.find((x) => x.id === t.typeId)?.sheetTab || '';
   });
   if (!('sheet' in st)) st.sheet = null;
+  ensureDefaults(st);
   st.version = 3;
   return st;
 }
@@ -997,7 +1033,7 @@ function migrate(st) {
 function mergeSheet(sheet) {
   if (!sheet) return;
   S.sheet = sheet;
-  const year = todayISO().slice(0, 4);
+  const year = String(sheet.year || todayISO().slice(0, 4));
   const seen = new Set();
   (sheet.players || []).forEach((sp) => {
     let p = S.players.find((x) => normName(x.name) === normName(sp.name));
@@ -1010,6 +1046,34 @@ function mergeSheet(sheet) {
     seen.add(p.id);
   });
   S.players.forEach((p) => { if (!seen.has(p.id)) p.inSheet = false; });
+  // Linhas de receita e categorias de despesa vêm do Sheets; ids fixos para serem iguais em todos os telemóveis
+  const key = (s) => normName(s).replace(/[^a-z0-9]+/g, '_');
+  const guessFund = (txt) => {
+    const t = normName(txt);
+    const byName = S.funds.find((f) => t.includes(normName(f.name)));
+    if (byName) return byName.id;
+    if (/critical/.test(t)) return S.funds.find((f) => /critical/.test(normName(f.name)))?.id || '';
+    if (/estadio|material|doac|contribui/.test(t)) return S.funds.find((f) => /estadio/.test(normName(f.name)))?.id || '';
+    return '';
+  };
+  const live = sheet.budget || {};
+  const liveNames = new Set((live.lines || []).map((l) => normName(l.name)));
+  (live.lines || []).forEach((l) => {
+    const hit = S.lines.find((x) => normName(x.name) === normName(l.name));
+    if (hit) { hit.section = l.section; hit.missing = false; return; }
+    const fundId = /ligas/i.test(l.section) ? guessFund(l.name) || S.funds[0]?.id : guessFund(l.name) || guessFund('estadios');
+    S.lines.push({ id: 'l_' + key(l.name), section: l.section, name: l.name, fundId, value: 0, fromSheet: true });
+  });
+  S.lines.forEach((l) => { l.missing = !liveNames.has(normName(l.name)); });
+  if (Array.isArray(live.cats)) {
+    const liveCats = new Set(live.cats.map(normName));
+    live.cats.forEach((c) => {
+      const hit = S.cats.find((x) => normName(x.name) === normName(c));
+      if (hit) { hit.missing = false; return; }
+      S.cats.push({ id: 'c_' + key(c), name: c, fundId: /misc$/i.test(normName(c)) && !/fenix/.test(normName(c)) ? '' : guessFund(c), fromSheet: true });
+    });
+    S.cats.forEach((c) => { c.missing = !liveCats.has(normName(c.name)); });
+  }
 }
 
 const sheetComp = (tab) => (S.sheet?.comps || []).find((c) => normName(c.tab) === normName(tab));
@@ -1036,11 +1100,18 @@ function sheetSlot(c) {
 function desiredSheet(tid) {
   const t = tourById(tid);
   const d = { tab: t.sheetTab, week: t.sheetWeek, ticks: {}, months: {}, extras: {}, despesas: [], lines: {} };
+  const noTab = !t.sheetTab;
   S.entries.filter((e) => e.tid === tid && e.method !== 'debt').forEach((e) => {
     const name = pn(e.playerId);
     t.comps.forEach((c) => {
       if (e.amt[c.key] == null) return;
       const slot = sheetSlot(c);
+      if (noTab && c.kind === 'line' && slot !== 'month' && slot !== 'extra') {
+        const ln = lineById(c.lineId)?.name;
+        if (ln) d.lines[ln] = r2((d.lines[ln] || 0) + num(e.amt[c.key]));
+        return;
+      }
+      if (noTab && slot === 'loja') return;
       if (slot === 'loja' || slot === 'liga') { (d.ticks[name] ||= { loja: false, liga: false })[slot] = true; }
       else if (slot === 'month') d.months[name] = true;
       else if (slot === 'extra') d.extras[name] = r2((d.extras[name] || 0) + num(e.amt[c.key]));
@@ -1094,7 +1165,7 @@ function sheetPayload(tid, moveId) {
   });
   new Set([...Object.keys(want.lines), ...Object.keys(was.lines || {})]).forEach((n) => {
     const add = r2((want.lines[n] || 0) - (was.lines?.[n] || 0));
-    if (add) req.lines.push({ name: n, add });
+    if (add) req.lines.push({ name: n, add, section: S.lines.find((l) => normName(l.name) === normName(n))?.section || '' });
   });
   want.despesas.forEach((id) => { if (!(was.despesas || []).includes(id)) req.despesas.push(despesaRow(S.moves.find((m) => m.id === id))); });
   (was.despesas || []).forEach((id) => { if (!want.despesas.includes(id)) manual.push('Uma despesa já escrita no Sheets foi apagada ou mudada na app. Corrige-a à mão na tabela Despesas.'); });
@@ -1120,7 +1191,7 @@ function sheetSummary(req) {
     L.push(`Users/Estadios · ${MONTHS[req.month.m - 1]}: marcar ${on}` + (off ? `, desmarcar ${off}` : ''));
   }
   (req.extras || []).forEach((x) => L.push(`Contribuição adicional de ${x.name}: ${x.add > 0 ? '+' : ''}${eur(x.add)}`));
-  (req.lines || []).forEach((x) => L.push(`${x.name}: ${x.add > 0 ? '+' : ''}${eur(x.add)}`));
+  (req.lines || []).forEach((x) => { const isNew = S.sheet && !(S.sheet.budget?.lines || []).some((l) => normName(l.name) === normName(x.name)); L.push(`${isNew ? `Criar a linha "${x.name}" em ${x.section || 'Income Misc'} com` : `${x.name}:`} ${x.add > 0 ? '+' : ''}${eur(x.add)}`); });
   (req.despesas || []).forEach((x) => L.push(`Despesa nova: ${x.desc} · ${eur(x.value)}`));
   return L;
 }
@@ -1165,25 +1236,40 @@ function applyRecords(list) {
       const c = r.data;
       S.settings.treasurerId = c.treasurerId;
       ['types', 'stores', 'accounts', 'cats', 'funds', 'lines'].forEach((k) => { if (Array.isArray(c[k])) S[k] = c[k]; });
+      ensureDefaults(S);
     }
   });
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { migrate, mergeSheet, sheetPayload, desiredSheet, markWritten, buildRecords, applyRecords, suggestWeek, excelDeltas, seed, emptyState, setState, getState: () => S, compute, actionsFor, alertsFor, excelPlan, excelCurrent, pendingLaunch, launch, bankView, discordReport, csvCheckin, csvExcel, exportBundle, importData, defaultAmounts, monthlyPaidElsewhere, addExample };
+  module.exports = { ESPECIAL, migrate, mergeSheet, sheetPayload, desiredSheet, markWritten, buildRecords, applyRecords, suggestWeek, excelDeltas, seed, emptyState, setState, getState: () => S, compute, actionsFor, alertsFor, excelPlan, excelCurrent, pendingLaunch, launch, bankView, discordReport, csvCheckin, csvExcel, exportBundle, importData, defaultAmounts, monthlyPaidElsewhere, addExample };
 }
 
 /* Caixa BBPT — ligação ao Google Sheets (script do ficheiro de Finanças) */
 'use strict';
 
 const LINK_KEY = KEY + '-link';
-let LINK = { url: '', key: '', role: '', file: '', since: 0, base: {}, init: false, lastOk: 0, lastErr: '', sheetAt: 0 };
+const EMPTY_LINK = () => ({ url: '', key: '', role: '', who: '', organizers: [], file: '', since: 0, base: {}, meta: {}, init: false, lastOk: 0, lastErr: '', sheetAt: 0, meLocal: LINK?.meLocal || '' });
+let LINK = null;
+LINK = EMPTY_LINK();
 let SYNC = { busy: false, timer: null, poll: null, queued: false };
 
 function loadLink() { try { const l = JSON.parse(localStorage.getItem(LINK_KEY) || 'null'); if (l) LINK = { ...LINK, ...l }; } catch (e) { /* */ } }
 function saveLink() { try { localStorage.setItem(LINK_KEY, JSON.stringify(LINK)); } catch (e) { /* */ } }
 const linked = () => !!(LINK.url && LINK.key && LINK.role);
 const readOnly = () => linked() && LINK.role === 'read';
+/* Quem está a usar este telemóvel: vem da chave pessoal (ligado) ou de Mais (sem ligação) */
+const meName = () => (linked() ? LINK.who : LINK.meLocal) || '';
+const meId = () => { const n = meName(); return n ? S.players.find((p) => normName(p.name) === normName(n))?.id || '' : ''; };
+function whoChanged(ids) {
+  let best = null;
+  ids.forEach((id) => { const m = LINK.meta?.[id]; if (m && (!best || m.at > best.at)) best = m; });
+  return best;
+}
+const fmtWhen = (ms) => { const d = new Date(ms); return `${pad2(d.getDate())}/${pad2(d.getMonth() + 1)} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`; };
+function markOrganizers(names) {
+  (names || []).forEach((n) => { const p = S.players.find((x) => normName(x.name) === normName(n)); if (p) p.org = true; });
+}
 
 async function api(body) {
   const res = await fetch(LINK.url, {
@@ -1215,9 +1301,10 @@ async function syncNow(opts = {}) {
     const push = LINK.init && LINK.role === 'org' ? computePush() : [];
     const res = await api({ action: 'sync', since: LINK.since || 0, push, sheet: wantSheet });
     const firstTime = !LINK.init;
-    LINK.role = res.role; LINK.file = res.file;
+    LINK.role = res.role; LINK.file = res.file; LINK.who = res.who || ''; LINK.organizers = res.organizers || [];
+    LINK.meta ||= {};
     const pushed = new Set(push.map((p) => p.id));
-    push.forEach((p) => { LINK.base[p.id] = { k: p.kind, j: p.deleted ? null : JSON.stringify(p.data) }; });
+    push.forEach((p) => { LINK.base[p.id] = { k: p.kind, j: p.deleted ? null : JSON.stringify(p.data) }; LINK.meta[p.id] = { by: LINK.who, at: res.serverTime || Date.now() }; });
     const local = LINK.init ? buildRecords() : null;
     const incoming = res.records.filter((r) => {
       if (pushed.has(r.id)) return false;
@@ -1225,9 +1312,10 @@ async function syncNow(opts = {}) {
       return true;
     });
     applyRecords(incoming);
-    res.records.filter((r) => !pushed.has(r.id)).forEach((r) => { LINK.base[r.id] = { k: r.kind, j: r.deleted ? null : JSON.stringify(r.data) }; });
+    res.records.filter((r) => !pushed.has(r.id)).forEach((r) => { LINK.base[r.id] = { k: r.kind, j: r.deleted ? null : JSON.stringify(r.data) }; LINK.meta[r.id] = { by: r.by, at: r.updatedAt }; });
     LINK.since = res.serverTime || LINK.since;
     if (res.sheet) { mergeSheet(res.sheet); LINK.sheetAt = Date.now(); }
+    markOrganizers(LINK.organizers);
     LINK.init = true; LINK.lastOk = Date.now(); LINK.lastErr = '';
     saveLink(); saveLocal();
     if (!document.querySelector('#sheet:not([hidden])')) render(); else paintSync();
@@ -1276,7 +1364,8 @@ function linkStatusHTML() {
   const l = syncLabel();
   if (!l) return '<p class="muted">Não ligado. Os dados ficam só neste telemóvel.</p>';
   return `<p class="linkstate ${l.cls}"><span class="dot"></span>${esc(l.txt)}</p>
-    ${LINK.file ? `<p class="muted small">Ficheiro: <b>${esc(LINK.file)}</b> · acesso: ${LINK.role === 'org' ? 'organizador (lê e escreve)' : 'só leitura'}</p>` : ''}`;
+    ${LINK.file ? `<p class="small">Ficheiro: <b>${esc(LINK.file)}</b></p>
+    <p class="small">${LINK.role === 'org' ? `Ligado como <b>${esc(LINK.who)}</b> (organizador: lê e escreve)` : 'Ligado com a chave de leitura (só vê)'}</p>` : ''}`;
 }
 
 async function connect(url, key) {
@@ -1285,10 +1374,10 @@ async function connect(url, key) {
   if (!key) throw new Error('Escreve a chave.');
   if (!window.__PWA__) throw new Error('Esta pré-visualização não consegue falar com o Google. Liga a partir da app publicada no GitHub Pages.');
   const prev = { ...LINK };
-  LINK = { url, key, role: '', file: '', since: 0, base: {}, init: false, lastOk: 0, lastErr: '', sheetAt: 0 };
+  LINK = { ...EMPTY_LINK(), url, key };
   try {
     const r = await api({ action: 'ping' });
-    LINK.role = r.role; LINK.file = r.file;
+    LINK.role = r.role; LINK.file = r.file; LINK.who = r.who || ''; LINK.organizers = r.organizers || [];
     saveLink();
     await syncNow({ sheet: true });
     return r;
@@ -1299,7 +1388,7 @@ async function connect(url, key) {
 }
 
 function disconnect() {
-  LINK = { url: '', key: '', role: '', file: '', since: 0, base: {}, init: false, lastOk: 0, lastErr: '', sheetAt: 0 };
+  LINK = EMPTY_LINK();
   saveLink();
   S.sheet = null;
 }
@@ -1323,6 +1412,7 @@ async function writeToSheet(tid, moveId) {
   const oldSnap = item.launched?.snap;
   const res = await api({ action: 'apply', ...P.req });
   markWritten(tid, moveId, P.want, res);
+  item.launched.who = res.who || LINK.who;
   // Verificação: o Sheets mostra o que a app esperava?
   const newSnap = item.launched.snap;
   const dLines = {}, dFunds = {};
@@ -1338,6 +1428,19 @@ async function writeToSheet(tid, moveId) {
   saveLocal();
   scheduleSync();
   return UI.report;
+}
+
+/* Apaga a cópia local e descarrega tudo outra vez do Sheets (não apaga nada no Sheets) */
+async function reloadFromSheet() {
+  const keep = { url: LINK.url, key: LINK.key, meLocal: LINK.meLocal };
+  const ex = S.tournaments.filter((t) => t.example);
+  const exIds = new Set(ex.map((t) => t.id));
+  const exEntries = S.entries.filter((e) => exIds.has(e.tid)), exMoves = S.moves.filter((m) => exIds.has(m.tid));
+  S = migrate(emptyState());
+  S.tournaments.push(...ex); S.entries.push(...exEntries); S.moves.push(...exMoves);
+  LINK = { ...EMPTY_LINK(), ...keep, role: LINK.role, who: LINK.who };
+  saveLink(); saveLocal();
+  await syncNow({ sheet: true });
 }
 
 /* Caixa BBPT — interface */
@@ -1404,7 +1507,7 @@ async function exportFile(name, content, mime) {
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
   } catch (e) { toast('Não foi possível descarregar. Usa "Copiar".'); }
 }
-const slug = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const slug = (s) => String(s).normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 /* ---------- Folha (formulário por baixo) ---------- */
 function openSheet({ title, body, submit = 'Guardar', onSubmit, onMount, del, delLabel }) {
@@ -1450,16 +1553,16 @@ function vResumo() {
   const pend = pendingLaunch();
   const C = compute('all');
   const banks = bankView();
-  const people = Object.keys(C.P).filter((pid) => Math.abs(C.P[pid].held) >= EPS);
+  const people = Object.keys(C.P).filter((pid) => Math.abs(C.P[pid].held) >= EPS).sort((a, b) => (b === meId()) - (a === meId()));
   const corrente = r2(S.funds.reduce((s, f) => s + (cur.funds[f.id] || 0), 0));
   return `
   <header class="top"><div><p class="eyebrow">Finanças Beyblade PT · Lisboa</p><h1>Caixa</h1></div><div class="top-side">${syncChip()}<p class="today">${fmtDate(todayISO())}</p></div></header>
   <section class="block"><h2>Saldos no Excel</h2>
     <div class="funds">${S.funds.map((f) => `<article class="fundcard"><p class="fc-acc">${esc(accById(f.accountId)?.name || '')}</p><h3>${esc(f.name)}</h3><p class="fc-big">${eur(cur.funds[f.id] || 0)}</p></article>`).join('')}
     <article class="fundcard total"><p class="fc-acc">Excel</p><h3>Saldo Corrente</h3><p class="fc-big">${eur(corrente)}</p></article></div>
-    <p class="hint">É o que o Excel deve mostrar depois de lançares tudo o que está marcado como lançado.</p>
+    <p class="hint">${linked() ? `Lido agora do Google Sheets${LINK.sheetAt ? ' (' + fmtWhen(LINK.sheetAt) + ')' : ''}.` : 'É o que o Excel deve mostrar depois de lançares tudo o que está marcado como lançado.'}</p>
   </section>
-  <section class="block"><h2>Por lançar no Excel</h2>
+  <section class="block"><h2>${linked() ? 'Por escrever no Sheets' : 'Por lançar no Excel'}</h2>
     ${pend.length ? `<ul class="kv">${pend.map((x) => `<li><button type="button" class="linkrow" data-act="${x.type === 't' ? 'open-excel' : 'edit-move'}" data-id="${x.id}"><span>${esc(x.name)} <small class="muted">${fmtDate(x.date)}</small></span><span>${chip('por lançar', 'warn')}</span></button></li>`).join('')}</ul>` : '<p class="allgood">✓ Não há nada por lançar.</p>'}
   </section>
   <section class="block"><h2>Acertos por fazer</h2>
@@ -1474,7 +1577,7 @@ function vResumo() {
 
 function settleRow(C, pid, tid) {
   const acts = actionsFor(C, pid);
-  return `<li class="settle-row ${acts[0].cls}"><div class="settle-who"><b>${esc(pn(pid))}</b>${pid === S.settings.treasurerId ? chip('tesoureiro', 'soft') : ''}</div>
+  return `<li class="settle-row ${acts[0].cls}${pid === meId() ? ' me' : ''}"><div class="settle-who"><b>${esc(pn(pid))}</b>${pid === meId() ? chip('tu', 'ok') : ''}${pid === S.settings.treasurerId ? chip('tesoureiro', 'soft') : ''}</div>
     <div class="settle-acts">${acts.map((a) => `<div class="settle-act"><span>${esc(a.txt)}</span>${a.kind ? `<button type="button" class="btn small" data-act="quick" data-kind="${a.kind}" data-pid="${pid}" data-amt="${a.amount}" data-acc="${a.accountId || ''}" data-store="${a.storeId || ''}" data-tid="${tid || ''}">Registar</button>` : ''}</div>`).join('')}</div></li>`;
 }
 
@@ -1490,7 +1593,7 @@ function tourStatus(t) {
 function vTours() {
   const ts = S.tournaments.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   return `
-  <header class="top"><div><p class="eyebrow">Check-in e contas</p><h1>Torneios</h1></div><div class="top-side">${syncChip()}<button type="button" class="btn primary editonly" data-act="new-tour">Novo torneio</button></div></header>
+  <header class="top"><div><p class="eyebrow">${meName() ? `Olá, ${esc(meName())}` : 'Check-in e contas'}</p><h1>Torneios</h1></div><div class="top-side">${syncChip()}<button type="button" class="btn primary editonly" data-act="new-tour">Novo torneio</button></div></header>
   ${readOnly() ? '<p class="banner">Estás em modo de leitura: vês tudo o que os organizadores registam, mas não podes alterar.</p>' : ''}
   ${ts.length ? `<ul class="cards">${ts.map((t) => {
     const C = compute(t.id);
@@ -1517,6 +1620,7 @@ function vTour() {
     <div class="ev-tools">${tourStatus(t)}${t.sheetWeek && sheetComp(t.sheetTab) ? chip(`${t.sheetTab} · ${t.sheetWeek.replace(/^./, (c) => c.toUpperCase())}`, 'soft') : ''}<button type="button" class="btn small ghost editonly" data-act="edit-tour" data-id="${t.id}">Editar</button></div>
   </header>
   ${t.example ? `<p class="banner">${esc(t.notes)}</p>` : ''}
+  ${(() => { const w = linked() && whoChanged([t.id, ...S.entries.filter((e) => e.tid === t.id).map((e) => e.id), ...S.moves.filter((m) => m.tid === t.id).map((m) => m.id)]); return w ? `<p class="muted small">Última alteração: <b>${esc(w.by || '?')}</b> · ${fmtWhen(w.at)}${t.launched?.who ? ` · escrito no Sheets por ${esc(t.launched.who)} em ${fmtDate(t.launched.date)}` : ''}</p>` : ''; })()}
   <section class="stats">
     <div><span>Jogadores</span><b>${C.players}</b></div>
     <div><span>MBWAY</span><b>${eur(C.byMethod.mbway || 0)}</b></div>
@@ -1602,6 +1706,7 @@ function entrySheet(e) {
       <label class="field">Pagou por<select name="method">${Object.entries(METHOD).filter(([k]) => k !== 'own' || playerById(e.playerId)?.org).map(([k, v]) => opt(k, v, k === e.method)).join('')}</select></label>
       <label class="field">Dinheiro ficou com<select name="recv">${orgOpts(e.recv)}</select></label>
       <p class="hint">Se o jogador pagou por engano a outro organizador, escolhe aqui quem recebeu. A app trata do resto nos acertos.</p>
+      ${linked() && LINK.meta?.[e.id] ? `<p class="muted small">Registado/alterado por <b>${esc(LINK.meta[e.id].by || '?')}</b> · ${fmtWhen(LINK.meta[e.id].at)}</p>` : ''}
       <p class="total">Total <b id="entryTotal">—</b></p>`,
     onMount: (form) => {
       const upd = () => { const fd = new FormData(form); $('#entryTotal').textContent = eur(t.comps.reduce((s, c) => s + (fd.get('on_' + c.key) ? num(fd.get('v_' + c.key)) : 0), 0)); };
@@ -1657,7 +1762,7 @@ function moveRows(list) {
 function moveForm(kind, move, preset = {}) {
   const t = tourById(move ? move.tid : ('tid' in preset ? preset.tid : UI.tid));
   const C = t ? compute(t.id) : compute('all');
-  const org = t?.organizerId || S.settings.treasurerId;
+  const org = (playerById(meId())?.org && meId()) || t?.organizerId || S.settings.treasurerId;
   const m = move || {
     kind, tid: t?.id || null, date: todayISO(), desc: '', note: '', method: 'MBWAY',
     amount: preset.amount ?? '', by: preset.by || org, from: preset.from || org, to: preset.to || S.settings.treasurerId,
@@ -1711,6 +1816,7 @@ function moveForm(kind, move, preset = {}) {
     body: `${fields}
       <div class="row2"><label class="field">Data<input type="date" name="date" value="${esc(m.date)}"></label>
       <label class="field">Torneio<select name="tid">${tourOpts(m.tid)}</select></label></div>
+      ${move && linked() && LINK.meta?.[move.id] ? `<p class="muted small">Registado/alterado por <b>${esc(LINK.meta[move.id].by || '?')}</b> · ${fmtWhen(LINK.meta[move.id].at)}</p>` : ''}
       ${kind !== 'despesa' && kind !== 'receita' ? `<label class="field">Notas<input name="desc" value="${esc(m.desc)}" placeholder="opcional"></label>` : ''}
       ${isGeneral && move && linked() ? sheetBox(null, move.id) : ''}
       ${isGeneral && move && !linked() ? `<div class="bar wrap">${move.launched ? `<span class="muted small">Lançado no Excel em ${fmtDate(move.launched.date)}</span><button type="button" class="btn small ghost" data-act="unlaunch-move" data-id="${move.id}">Desmarcar</button>` : `<button type="button" class="btn small" data-act="launch-move" data-id="${move.id}">Marcar como lançado no Excel</button>`}</div>${excelBlock(excelPlan(null, move.id))}` : ''}`,
@@ -1756,7 +1862,7 @@ function moveForm(kind, move, preset = {}) {
 
 /* --- Acertos --- */
 function vSettle(t, C) {
-  const pids = Object.keys(C.P);
+  const pids = Object.keys(C.P).sort((a, b) => (b === meId()) - (a === meId()));
   const others = Object.entries(C.recvBy).filter(([, r]) => r.others.length);
   return `
   ${alertList(alertsFor(t.id))}
@@ -1865,9 +1971,9 @@ function vReport(t) {
     <div class="bar wrap">
       <button type="button" class="btn" data-act="exp-checkin" data-id="${t.id}">CSV do check-in</button>
       <button type="button" class="btn" data-act="exp-excel" data-id="${t.id}">CSV para o Excel</button>
-      <button type="button" class="btn" data-act="exp-tour" data-id="${t.id}">Enviar torneio a outro organizador</button>
+      ${linked() ? '' : `<button type="button" class="btn" data-act="exp-tour" data-id="${t.id}">Enviar torneio a outro organizador</button>`}
     </div>
-    <p class="hint">"Enviar torneio" cria um ficheiro que o outro organizador importa em Mais › Dados. Jogadores com o mesmo nome juntam-se sozinhos.</p>
+    <p class="hint">${linked() ? 'Com o Google Sheets ligado, os outros organizadores já veem este torneio. Não é preciso enviar nada.' : '"Enviar torneio" cria um ficheiro que o outro organizador importa em Mais › Dados. Jogadores com o mesmo nome juntam-se sozinhos.'}</p>
   </section>`;
 }
 
@@ -1908,7 +2014,7 @@ function weekOpts(tab, sel) {
 
 function tourForm(t) {
   const type0 = S.types[0];
-  const d = t || { name: '', date: todayISO(), typeId: type0?.id, organizerId: S.settings.treasurerId, comps: [] };
+  const d = t || { name: '', date: todayISO(), typeId: type0?.id, organizerId: (playerById(meId())?.org && meId()) || S.settings.treasurerId, comps: [] };
   const autoName = (typeId, date) => `${typeById(typeId)?.name || 'Torneio'} · ${fmtDate(date).slice(0, 5)}`;
   openSheet({
     title: t ? 'Editar torneio' : 'Novo torneio',
@@ -1920,12 +2026,23 @@ function tourForm(t) {
       <div class="row2"><label class="field">Data<input type="date" name="date" value="${esc(d.date)}"></label>
       <label class="field">Quem organiza<select name="organizerId">${orgOpts(d.organizerId)}</select></label></div>
       <label class="field">Nome<input name="name" value="${esc(d.name || autoName(d.typeId, d.date))}" data-auto="${t ? '' : '1'}"></label>
-      ${S.sheet ? `<div class="row2"><label class="field">Aba no Sheets<select name="sheetTab">${tabOpts(d.sheetTab || typeById(d.typeId)?.sheetTab)}</select></label>
+      <div id="miscField"${typeById(d.typeId)?.special ? '' : ' hidden'}>
+        <label class="field">Linha no Budget Geral (Income Misc)<input name="miscLine" value="${esc(d.miscLine || '')}" placeholder="ex.: Torneio Exterior Porto 2026"></label>
+        <p class="hint">Evento fora das lojas: não há aba de competição. As inscrições vão para esta linha em Income Misc (conta para o saldo de Estádios e Material). Se a linha não existir, a app cria-a numa das linhas vazias ao escrever no Sheets.</p>
+      </div>
+      ${S.sheet ? `<div class="row2" id="sheetFields"${typeById(d.typeId)?.special ? ' hidden' : ''}><label class="field">Aba no Sheets<select name="sheetTab">${tabOpts(d.sheetTab || typeById(d.typeId)?.sheetTab)}</select></label>
       <label class="field">Semana no Sheets<select name="sheetWeek" id="weekSel">${weekOpts(d.sheetTab || typeById(d.typeId)?.sheetTab, t ? d.sheetWeek : suggestWeek(typeById(d.typeId)?.sheetTab))}</select></label></div>
-      <p class="hint">A app sugere a primeira semana vazia. É nessa coluna que os pagamentos vão ser marcados.</p>` : ''}
+      <p class="hint" id="sheetHint"${typeById(d.typeId)?.special ? ' hidden' : ''}>A app sugere a primeira semana vazia. É nessa coluna que os pagamentos vão ser marcados.</p>` : ''}
       ${t ? compEditor(t.comps) + '<p class="hint">Mudar as partes aqui só afeta este torneio. Para mudar todos os futuros, edita o tipo em Mais.</p>' : '<p class="hint">Os preços e linhas do Excel vêm do tipo de torneio (Mais › Tipos de torneio). Podes ajustá-los depois em Editar.</p>'}
       ${t ? '<p class="hint">Apagar o torneio apaga também o check-in e os movimentos dele.</p>' : ''}`,
     onMount: (form) => {
+      const toggleSpecial = () => {
+        const sp = !!typeById(form.elements.typeId.value)?.special;
+        $('#miscField').hidden = !sp;
+        if ($('#sheetFields')) { $('#sheetFields').hidden = sp; $('#sheetHint').hidden = sp; }
+        if (sp && !form.elements.miscLine.value) form.elements.miscLine.value = form.elements.name.value;
+      };
+      form.elements.typeId.addEventListener('change', toggleSpecial);
       if (form.elements.sheetTab) {
         form.elements.typeId.addEventListener('change', () => { const tab = typeById(form.elements.typeId.value)?.sheetTab || ''; form.elements.sheetTab.innerHTML = tabOpts(tab); $('#weekSel').innerHTML = weekOpts(tab, suggestWeek(tab)); });
         form.elements.sheetTab.addEventListener('change', () => { const tab = form.elements.sheetTab.value; $('#weekSel').innerHTML = weekOpts(tab, (t && t.sheetTab === tab) ? t.sheetWeek : suggestWeek(tab)); });
@@ -1939,17 +2056,25 @@ function tourForm(t) {
       const name = String(fd.get('name')).trim();
       if (!name) return 'Dá um nome ao torneio.';
       if (!fd.get('organizerId')) return 'Escolhe quem organiza (marca organizadores em Jogadores).';
+      const special = !!typeById(fd.get('typeId'))?.special;
+      const miscName = special ? String(fd.get('miscLine') || name).trim() : '';
+      const useMisc = (comps) => {
+        if (!special) return comps;
+        const lid = ensureMiscLine(miscName);
+        return comps.map((c) => (c.kind === 'line' && !c.monthly && !c.extra ? { ...c, lineId: lid } : c));
+      };
       if (t) {
         const comps = readComps(fd, form, t.comps);
         if (comps.some((c) => !c.label)) return 'Cada parte precisa de nome.';
         const gone = t.comps.filter((c) => !comps.some((x) => x.key === c.key) && S.entries.some((e) => e.tid === t.id && e.amt[c.key] != null));
         if (gone.length) return `"${gone[0].label}" tem valores no check-in. Desmarca-a nos jogadores antes de a remover.`;
-        Object.assign(t, { name, date: fd.get('date'), typeId: fd.get('typeId'), organizerId: fd.get('organizerId'), comps });
-        if (fd.has('sheetTab')) Object.assign(t, { sheetTab: fd.get('sheetTab') || '', sheetWeek: fd.get('sheetWeek') || '' });
+        Object.assign(t, { name, date: fd.get('date'), typeId: fd.get('typeId'), organizerId: fd.get('organizerId'), comps: useMisc(comps), miscLine: miscName });
+        if (special) Object.assign(t, { sheetTab: '', sheetWeek: '' });
+        else if (fd.has('sheetTab')) Object.assign(t, { sheetTab: fd.get('sheetTab') || '', sheetWeek: fd.get('sheetWeek') || '' });
       } else {
         const type = typeById(fd.get('typeId'));
         const id = uid('t');
-        S.tournaments.push({ id, name, date: fd.get('date'), typeId: type.id, organizerId: fd.get('organizerId'), comps: JSON.parse(JSON.stringify(type.comps)), notes: '', example: false, launched: null, sheetTab: fd.has('sheetTab') ? fd.get('sheetTab') : type.sheetTab || '', sheetWeek: fd.get('sheetWeek') || '' });
+        S.tournaments.push({ id, name, date: fd.get('date'), typeId: type.id, organizerId: fd.get('organizerId'), comps: useMisc(JSON.parse(JSON.stringify(type.comps))), notes: '', example: false, launched: null, sheetTab: special ? '' : fd.has('sheetTab') ? fd.get('sheetTab') : type.sheetTab || '', sheetWeek: special ? '' : fd.get('sheetWeek') || '', miscLine: miscName });
         UI.tid = id; UI.tTab = 'checkin'; UI.tab = 'torneios';
       }
       return null;
@@ -1958,14 +2083,32 @@ function tourForm(t) {
 }
 
 /* ---------- Jogadores ---------- */
-function vPlayers() {
+function playerFilter() {
   const q = UI.pq.trim().toLowerCase();
-  const month = monthKey(todayISO());
-  const list = S.players.filter((p) => !q || p.name.toLowerCase().includes(q));
+  const month = UI.pm || monthKey(todayISO());
+  return S.players.filter((p) => {
+    if (q && !p.name.toLowerCase().includes(q)) return false;
+    if (!UI.pf || UI.pf === 'all') return true;
+    const paid = !!monthlyPaidElsewhere(p.id, month);
+    return UI.pf === 'paid' ? paid : !paid;
+  });
+}
+function vPlayers() {
+  const cur = monthKey(todayISO());
+  const month = UI.pm || cur;
+  const paidN = S.players.filter((p) => monthlyPaidElsewhere(p.id, month)).length;
+  const list = playerFilter();
+  const y = month.slice(0, 4);
   return `
-  <header class="top"><div><p class="eyebrow">${S.players.length} jogadores</p><h1>Jogadores</h1></div><button type="button" class="btn primary" data-act="new-player">Adicionar</button></header>
+  <header class="top"><div><p class="eyebrow">${S.players.length} jogadores</p><h1>Jogadores</h1></div><button type="button" class="btn primary editonly" data-act="new-player">Adicionar</button></header>
+  <section class="monthbar">
+    <div class="monthnav"><button type="button" class="icon-btn" data-act="pm" data-d="-1" aria-label="Mês anterior"${month.endsWith('-01') ? ' disabled' : ''}>‹</button>
+      <div class="mn"><b>${esc(monthName(month))} ${y}</b>${month === cur ? chip('mês atual', 'soft') : `<button type="button" class="link small" data-act="pm" data-d="0">voltar ao mês atual</button>`}</div>
+      <button type="button" class="icon-btn" data-act="pm" data-d="1" aria-label="Mês seguinte"${month.endsWith('-12') ? ' disabled' : ''}>›</button></div>
+    <p class="muted small">Mensal de estádios: <b>${paidN}</b> pagaram · ${S.players.length - paidN} não pagaram</p>
+    <div class="mini-seg">${[['all', 'Todos'], ['paid', 'Pagaram'], ['unpaid', 'Não pagaram']].map(([k, l]) => `<button type="button" data-act="pf" data-f="${k}" aria-pressed="${(UI.pf || 'all') === k}">${l}</button>`).join('')}</div>
+  </section>
   <input id="pSearch" type="search" autocomplete="off" placeholder="Procurar…" value="${esc(UI.pq)}" aria-label="Procurar jogador">
-  <p class="hint">✓ ${esc(monthName(month))} = já pagou a mensal de estádios deste mês (no Excel ou num torneio da app).</p>
   <ul class="rows" id="pList">${playerRows(list, month)}</ul>`;
 }
 
@@ -1983,13 +2126,16 @@ function playerForm(p, presetName, after) {
   const used = p && (S.entries.some((e) => e.playerId === p.id || e.recv === p.id) || S.moves.some((m) => [m.by, m.from, m.to, m.recv].includes(p.id)));
   openSheet({
     title: p ? p.name : 'Novo jogador',
+    submit: readOnly() ? '' : 'Guardar',
     del: p && !used ? () => { S.players = S.players.filter((x) => x.id !== p.id); } : null,
     body: `
-      <label class="field">Nome (como no Excel)<input name="name" value="${esc(p?.name || presetName || '')}" placeholder="username Challonge (Nome)"></label>
-      <label class="check"><input type="checkbox" name="org" ${p?.org ? 'checked' : ''}> Organizador (recebe dinheiro nos torneios)</label>
-      <fieldset class="comps"><legend>Mensal de estádios marcada no Excel (${year})</legend>
-        <div class="months">${MONTHS.map((m, i) => { const k = `${year}-${pad2(i + 1)}`; return `<label class="check"><input type="checkbox" name="mo_${k}" ${p?.months?.[k] ? 'checked' : ''}> ${m.slice(0, 3)}</label>`; }).join('')}</div>
-        <p class="hint">Usa para meses pagos antes da app. Os pagos em torneios da app contam sozinhos.</p>
+      <label class="field">Nome (como no Excel)<input name="name" value="${esc(p?.name || presetName || '')}" placeholder="username Challonge (Nome)"${linked() && p?.inSheet ? ' readonly' : ''}></label>
+      ${linked() && p?.inSheet ? '<p class="hint">Para mudar o nome, muda-o na USER LIST do Sheets.</p>' : ''}
+      ${linked() && !p ? '<p class="hint">Fica na app e é acrescentado à USER LIST na próxima vez que escreveres um torneio onde ele jogue.</p>' : ''}
+      ${linked() && p ? `<p class="muted small">${p.org ? 'Organizador' : 'Jogador'}${LINK.organizers?.some((n) => normName(n) === normName(p.name)) ? ' (definido pela chave no script)' : ''}</p><input type="hidden" name="org" value="${p.org ? '1' : ''}">` : `<label class="check"><input type="checkbox" name="org" ${p?.org ? 'checked' : ''}> Organizador (recebe dinheiro nos torneios)</label>`}
+      <fieldset class="comps"><legend>Mensal de estádios (${year})</legend>
+        <div class="months">${MONTHS.map((m, i) => { const k = `${year}-${pad2(i + 1)}`; return `<label class="check"><input type="checkbox" name="mo_${k}" ${p?.months?.[k] ? 'checked' : ''}${linked() ? ' disabled' : ''}> ${m.slice(0, 3)}</label>`; }).join('')}</div>
+        <p class="hint">${linked() ? 'Vem do Sheets (Users/Estadios). Muda-se ao escrever um torneio no Sheets, ou diretamente no ficheiro.' : 'Usa para meses pagos antes da app. Os pagos em torneios da app contam sozinhos.'}</p>
       </fieldset>
       ${hist.length ? `<h3 class="sub">Histórico</h3><ul class="kv">${hist.map(({ t, e }) => `<li><span>${esc(t.name)} <small class="muted">${fmtDate(t.date)}</small></span><span>${eur(entryTotal(e))} ${chip(METHOD[e.method], e.method === 'debt' ? 'warn' : '')}</span></li>`).join('')}</ul>` : ''}
       ${used ? '<p class="hint">Não dá para apagar: tem inscrições ou movimentos.</p>' : ''}`,
@@ -1998,7 +2144,7 @@ function playerForm(p, presetName, after) {
       if (!name) return 'Escreve o nome.';
       if (S.players.some((x) => x.id !== p?.id && x.name.toLowerCase() === name.toLowerCase())) return 'Já existe um jogador com esse nome.';
       const months = { ...(p?.months || {}) };
-      MONTHS.forEach((m, i) => { const k = `${year}-${pad2(i + 1)}`; if (fd.get('mo_' + k)) months[k] = true; else delete months[k]; });
+      if (!linked()) MONTHS.forEach((m, i) => { const k = `${year}-${pad2(i + 1)}`; if (fd.get('mo_' + k)) months[k] = true; else delete months[k]; });
       if (p) Object.assign(p, { name, org: !!fd.get('org'), months });
       else {
         let id = slugId(name); if (playerById(id)) id = uid('p');
@@ -2014,63 +2160,88 @@ function playerForm(p, presetName, after) {
 function vMais() {
   const cur = excelCurrent();
   const general = S.moves.filter((m) => !m.tid);
+  const L = linked();
+  const pendingLines = S.lines.filter((l) => L && l.missing);
   return `
   <header class="top"><div><p class="eyebrow">Definições</p><h1>Mais</h1></div>${syncChip()}</header>
+
   <section class="block linkbox"><h2>Google Sheets</h2>
     <div id="linkStatus">${linkStatusHTML()}</div>
-    ${LINK.url ? `<div class="bar wrap"><button type="button" class="btn" data-act="sync-now" data-sheet="1">Sincronizar agora</button>${LINK.role === 'org' ? '<button type="button" class="btn" data-act="link-share">Copiar link de ligação</button>' : ''}<button type="button" class="btn ghost danger" data-act="link-off">Desligar</button></div>
-      <p class="hint">O link de ligação abre a app já ligada ao ficheiro. Envia-o só a organizadores. Para jogadores, troca no link a chave pela chave de leitura.</p>`
+    ${LINK.url ? `<div class="bar wrap"><button type="button" class="btn" data-act="sync-now" data-sheet="1">Sincronizar agora</button>${LINK.role === 'org' ? '<button type="button" class="btn" data-act="link-share">Copiar o meu link de ligação</button>' : ''}<button type="button" class="btn ghost danger" data-act="link-off">Desligar</button></div>
+      ${LINK.role === 'org' ? '<p class="hint">O link de ligação leva a tua chave pessoal: serve para ligares os teus outros aparelhos. Não o envies a ninguém. Cada organizador tem a sua chave, definida no topo do script.</p>' : ''}`
     : `<label class="field">Link do script (termina em /exec)<input id="linkUrl" type="url" autocomplete="off" placeholder="https://script.google.com/macros/s/…/exec"></label>
-      <label class="field">Chave<input id="linkKey" type="password" autocomplete="off" placeholder="chave de organizador ou de leitura"></label>
+      <label class="field">A tua chave<input id="linkKey" type="password" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="a tua chave pessoal ou a de leitura"></label>
       <button type="button" class="btn primary" data-act="link-on">Ligar</button>
-      <p class="hint">Com a ligação, todos os organizadores veem os mesmos torneios, a lista de jogadores e os meses pagos vêm do ficheiro, e a app escreve o check-in no Sheets por ti.</p>`}
+      <p class="hint">Cada organizador tem a sua chave. É por ela que a app sabe quem és e regista quem fez cada alteração.</p>`}
   </section>
+
+  ${!L ? `<section class="block editonly"><h2>Quem és tu</h2>
+    <label class="field">Neste telemóvel, quem usa a app<select id="meLocal">${opt('', '— escolher —', !LINK.meLocal)}${organizers().map((p) => opt(p.name, p.name, p.name === LINK.meLocal)).join('')}</select></label>
+    <p class="hint">Serve para pôr o teu nome por defeito nos pagamentos e mostrar primeiro os teus acertos. Com o Google Sheets ligado, isto vem da tua chave.</p>
+  </section>` : ''}
+
   <section class="block editonly"><h2>Tesoureiro</h2>
     <label class="field">Dono das contas da org (recebe o dinheiro no fim)<select id="treasurer">${opt('', '— escolher —', !S.settings.treasurerId)}${orgOpts(S.settings.treasurerId)}</select></label>
+    <p class="hint">Organizadores: ${organizers().map((p) => esc(p.name)).join(', ') || '—'}. ${L ? 'Vêm da lista de chaves do script.' : 'Marca-os em Jogadores.'}</p>
   </section>
+
   <section class="block editonly"><h2>Movimentos gerais</h2>
-    <p class="hint">Receitas, despesas e depósitos que não pertencem a um torneio (ex.: doações, estádios comprados, danos).</p>
+    <p class="hint">Receitas, despesas e depósitos que não são de um torneio (ex.: estádios comprados, danos, doações).</p>
     <div class="bar wrap">${['despesa', 'receita', 'deposito', 'envio', 'reembolso'].map((k) => `<button type="button" class="btn small" data-act="new-move" data-kind="${k}" data-general="1">${MOVE_LABEL[k]}</button>`).join('')}</div>
     ${moveRows(general)}
   </section>
+
   <section class="block editonly"><h2>Tipos de torneio</h2>
-    <ul class="kv">${S.types.map((x) => `<li><button type="button" class="linkrow" data-act="edit-type" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted small">${x.comps.map((c) => `${esc(c.label)} ${eurPlain(c.price)}`).join(' · ')}</span></button></li>`).join('')}</ul>
+    <ul class="kv">${S.types.map((x) => `<li><button type="button" class="linkrow" data-act="edit-type" data-id="${x.id}"><span>${esc(x.name)}${x.sheetTab ? `<br><small class="muted">Aba: ${esc(x.sheetTab)}${L && !sheetComp(x.sheetTab) ? ' · não encontrada no Sheets' : ''}</small>` : ''}</span><span class="muted small">${x.comps.map((c) => `${esc(c.label)} ${eurPlain(c.price)}`).join(' · ')}</span></button></li>`).join('')}</ul>
     <button type="button" class="btn small" data-act="new-type">Adicionar tipo</button>
   </section>
-  <section class="block editonly"><h2>Excel e contas</h2>
-    <p class="hint">Valores base (o que o Excel tinha quando começaste a usar a app). Os torneios marcados como lançados somam-se a estes.</p>
+
+  <section class="block editonly"><h2>${L ? 'Budget Geral' : 'Excel'}</h2>
+    <p class="hint">${L ? 'Valores lidos agora do Google Sheets. Aqui só escolhes a que saldo pertence cada linha e categoria.' : 'Valores base: o que o Excel tinha quando começaste a usar a app. Os torneios marcados como lançados somam-se a estes.'}</p>
     <h3 class="sub">Linhas de receita</h3>
-    <ul class="kv">${S.lines.map((l) => `<li><button type="button" class="linkrow" data-act="edit-line" data-id="${l.id}"><span>${esc(l.name)} <small class="muted">${esc(l.section)} · ${esc(fundById(l.fundId)?.name || '')}</small></span><span>${eur(cur.lines[l.id] || 0)}</span></button></li>`).join('')}</ul>
-    <button type="button" class="btn small" data-act="new-line">Adicionar linha</button>
+    <ul class="kv">${S.lines.map((l) => `<li><button type="button" class="linkrow" data-act="edit-line" data-id="${l.id}"><span>${esc(l.name)} <small class="muted">${esc(l.section)} · ${esc(fundById(l.fundId)?.name || 'sem saldo')}</small>${L && l.missing ? ' ' + chip('não existe no Sheets', 'warn') : ''}</span><span>${eur(cur.lines[l.id] || 0)}</span></button></li>`).join('')}</ul>
+    ${L ? (pendingLines.length ? '<p class="hint">As linhas marcadas já não existem no Budget Geral. Se uma parte de inscrição ainda as usa, muda-a no tipo de torneio.</p>' : '') : '<button type="button" class="btn small" data-act="new-line">Adicionar linha</button>'}
     <h3 class="sub">Saldos (cartões verdes)</h3>
     <ul class="kv">${S.funds.map((f) => `<li><button type="button" class="linkrow" data-act="edit-fund" data-id="${f.id}"><span>${esc(f.name)} <small class="muted">${esc(accById(f.accountId)?.name || '')}</small></span><span>${eur(cur.funds[f.id] || 0)}</span></button></li>`).join('')}</ul>
-    <button type="button" class="btn small" data-act="new-fund">Adicionar saldo</button>
-    <h3 class="sub">Contas bancárias</h3>
-    <ul class="kv">${S.accounts.map((a) => `<li><button type="button" class="linkrow" data-act="edit-acc" data-id="${a.id}"><span>${esc(a.name)} <small class="muted">base em ${fmtDate(a.openingDate)}</small></span><span>${eur(a.opening)}</span></button></li>`).join('')}</ul>
-    <button type="button" class="btn small" data-act="new-acc">Adicionar conta</button>
+    ${L ? '' : '<button type="button" class="btn small" data-act="new-fund">Adicionar saldo</button>'}
     <h3 class="sub">Categorias de despesas</h3>
-    <ul class="kv">${S.cats.map((c) => `<li><button type="button" class="linkrow" data-act="edit-cat" data-id="${c.id}"><span>${esc(c.name)}</span><span class="muted small">${esc(fundById(c.fundId)?.name || '')}</span></button></li>`).join('')}</ul>
-    <button type="button" class="btn small" data-act="new-cat">Adicionar categoria</button>
+    <ul class="kv">${S.cats.map((c) => `<li><button type="button" class="linkrow" data-act="edit-cat" data-id="${c.id}"><span>${esc(c.name)}${L && c.missing ? ' ' + chip('não existe no Sheets', 'warn') : ''}</span><span class="muted small">${esc(fundById(c.fundId)?.name || 'só no Saldo Corrente')}</span></button></li>`).join('')}</ul>
+    ${L ? '' : '<button type="button" class="btn small" data-act="new-cat">Adicionar categoria</button>'}
+  </section>
+
+  <section class="block editonly"><h2>Contas e lojas</h2>
+    <h3 class="sub">Contas bancárias</h3>
+    <ul class="kv">${S.accounts.map((a) => `<li><button type="button" class="linkrow" data-act="edit-acc" data-id="${a.id}"><span>${esc(a.name)} <small class="muted">saldo real em ${fmtDate(a.openingDate)}</small></span><span>${eur(a.opening)}</span></button></li>`).join('')}</ul>
+    <button type="button" class="btn small" data-act="new-acc">Adicionar conta</button>
+    <p class="hint">Atualiza o saldo real quando vires o banco, para o Resumo te dizer se falta explicar algum dinheiro.</p>
     <h3 class="sub">Lojas</h3>
-    <ul class="kv">${S.stores.map((s) => `<li><button type="button" class="linkrow" data-act="edit-store" data-id="${s.id}"><span>${esc(s.name)}</span><span></span></button></li>`).join('')}</ul>
+    <ul class="kv">${S.stores.map((st) => `<li><button type="button" class="linkrow" data-act="edit-store" data-id="${st.id}"><span>${esc(st.name)}</span><span></span></button></li>`).join('')}</ul>
     <button type="button" class="btn small" data-act="new-store">Adicionar loja</button>
   </section>
+
   <section class="block editonly"><h2>Dados</h2>
-    <p class="hint">Os dados ficam só neste telemóvel. Faz uma cópia de segurança de vez em quando.</p>
-    <div class="bar wrap">
-      <button type="button" class="btn" data-act="exp-backup">Cópia de segurança (JSON)</button>
-      <button type="button" class="btn" data-act="copy-backup">Copiar cópia de segurança</button>
-    </div>
-    <h3 class="sub">Importar</h3>
-    <label class="field">Ficheiro (.json)<input type="file" id="importFile" accept=".json,application/json"></label>
-    <label class="field">ou cola o conteúdo<textarea id="importText" rows="3" placeholder='{"version":2,…}'></textarea></label>
-    <div class="bar wrap"><button type="button" class="btn primary" data-act="import" data-mode="merge">Juntar aos meus dados</button><button type="button" class="btn ghost danger" data-act="import" data-mode="replace">Substituir tudo</button></div>
-    <h3 class="sub">Exemplo e recomeço</h3>
-    <div class="bar wrap">
-      ${S.tournaments.some((t) => t.example) ? '<button type="button" class="btn ghost" data-act="rm-example">Apagar torneio de exemplo</button>' : '<button type="button" class="btn ghost" data-act="add-example">Mostrar torneio de exemplo</button>'}
-      <button type="button" class="btn ghost danger" data-act="reset">Repor dados iniciais</button>
-    </div>
+    ${L ? `<p class="hint">Os torneios e pagamentos estão guardados no Google Sheets (aba escondida "App Caixa"). A cópia de segurança é só por precaução.</p>
+      <div class="bar wrap">
+        <button type="button" class="btn" data-act="exp-backup">Cópia de segurança (JSON)</button>
+        <button type="button" class="btn ghost" data-act="reload-sheet">Voltar a descarregar tudo do Sheets</button>
+      </div>
+      <p class="hint">"Voltar a descarregar" apaga só a cópia deste telemóvel e volta a buscar tudo. Não mexe no Sheets.</p>`
+    : `<p class="hint">Sem ligação ao Google Sheets, os dados ficam só neste telemóvel. Faz uma cópia de segurança de vez em quando.</p>
+      <div class="bar wrap">
+        <button type="button" class="btn" data-act="exp-backup">Cópia de segurança (JSON)</button>
+        <button type="button" class="btn" data-act="copy-backup">Copiar cópia de segurança</button>
+      </div>
+      <h3 class="sub">Importar</h3>
+      <label class="field">Ficheiro (.json)<input type="file" id="importFile" accept=".json,application/json"></label>
+      <label class="field">ou cola o conteúdo<textarea id="importText" rows="3" placeholder='{"version":3,…}'></textarea></label>
+      <div class="bar wrap"><button type="button" class="btn primary" data-act="import" data-mode="merge">Juntar aos meus dados</button><button type="button" class="btn ghost danger" data-act="import" data-mode="replace">Substituir tudo</button></div>
+      <h3 class="sub">Recomeçar</h3>
+      <div class="bar wrap"><button type="button" class="btn ghost danger" data-act="reset">Repor dados iniciais</button></div>`}
+    <h3 class="sub">Exemplo</h3>
+    <div class="bar wrap">${S.tournaments.some((t) => t.example) ? '<button type="button" class="btn ghost" data-act="rm-example">Apagar torneio de exemplo</button>' : '<button type="button" class="btn ghost" data-act="add-example">Mostrar torneio de exemplo</button>'}</div>
+    <p class="hint">O exemplo fica só neste telemóvel e não conta para nada.</p>
   </section>
+
   <section class="block"><h2>Instalar no telemóvel</h2>
     <p><b>iPhone:</b> abre no Safari › Partilhar › Adicionar ao ecrã principal.<br><b>Android:</b> abre no Chrome › menu ⋮ › Instalar app.</p>
     <button type="button" class="btn" id="installBtn" data-act="install" hidden>Instalar agora</button>
@@ -2082,7 +2253,7 @@ function vMais() {
 function simpleForm({ title, item, fields, onSave, onDelete, canDelete = true }) {
   openSheet({
     title,
-    del: item && onDelete && canDelete ? onDelete : null,
+    del: item && onDelete && canDelete && !(linked() && !item.missing && ('section' in item || 'saldo' in item || ('fundId' in item && !('opening' in item)))) ? onDelete : null,
     body: fields.map((f) => {
       const v = item ? item[f.k] : f.def;
       if (f.type === 'select') return `<label class="field">${esc(f.label)}<select name="${f.k}">${f.options.map(([val, lab]) => opt(val, lab, val === v)).join('')}</select></label>`;
@@ -2106,14 +2277,16 @@ const fundOptsArr = () => S.funds.map((f) => [f.id, f.name]);
 function lineForm(l) {
   const used = l && (S.types.some((t) => t.comps.some((c) => c.lineId === l.id)) || S.tournaments.some((t) => t.comps.some((c) => c.lineId === l.id)) || S.moves.some((m) => m.lineId === l.id));
   simpleForm({ title: l ? 'Linha do Excel' : 'Nova linha do Excel', item: l, canDelete: !used,
-    fields: [{ k: 'name', label: 'Nome (igual ao Excel)', req: true }, { k: 'section', label: 'Tabela', type: 'select', options: SECTIONS.map((s) => [s, s]), def: 'Income Estádios' }, { k: 'fundId', label: 'Conta para o saldo', type: 'select', options: fundOptsArr() }, { k: 'value', label: 'Valor base', type: 'num' }],
+    fields: linked() ? [{ k: 'fundId', label: `${l?.name || ''}: conta para o saldo`, type: 'select', options: fundOptsArr() }]
+      : [{ k: 'name', label: 'Nome (igual ao Excel)', req: true }, { k: 'section', label: 'Tabela', type: 'select', options: SECTIONS.map((s) => [s, s]), def: 'Income Estádios' }, { k: 'fundId', label: 'Conta para o saldo', type: 'select', options: fundOptsArr() }, { k: 'value', label: 'Valor base', type: 'num' }],
     onSave: (d) => { if (l) Object.assign(l, d); else S.lines.push({ id: uid('l'), ...d }); },
     onDelete: () => { S.lines = S.lines.filter((x) => x.id !== l.id); } });
 }
 function fundForm(f) {
   const used = f && (S.lines.some((l) => l.fundId === f.id) || S.cats.some((c) => c.fundId === f.id));
   simpleForm({ title: f ? 'Saldo' : 'Novo saldo', item: f, canDelete: !used,
-    fields: [{ k: 'name', label: 'Nome', req: true }, { k: 'accountId', label: 'Conta bancária', type: 'select', options: S.accounts.map((a) => [a.id, a.name]) }, { k: 'saldo', label: 'Saldo base no Excel', type: 'num' }],
+    fields: linked() ? [{ k: 'accountId', label: `${f?.name || ''}: conta bancária`, type: 'select', options: S.accounts.map((a) => [a.id, a.name]) }]
+      : [{ k: 'name', label: 'Nome', req: true }, { k: 'accountId', label: 'Conta bancária', type: 'select', options: S.accounts.map((a) => [a.id, a.name]) }, { k: 'saldo', label: 'Saldo base no Excel', type: 'num' }],
     onSave: (d) => { if (f) Object.assign(f, d); else S.funds.push({ id: uid('f'), ...d }); },
     onDelete: () => { S.funds = S.funds.filter((x) => x.id !== f.id); } });
 }
@@ -2130,7 +2303,8 @@ function accForm(a) {
 function catForm(c) {
   const used = c && S.moves.some((m) => m.catId === c.id);
   simpleForm({ title: c ? 'Categoria' : 'Nova categoria', item: c, canDelete: !used,
-    fields: [{ k: 'name', label: 'Nome (igual ao Excel)', req: true }, { k: 'fundId', label: 'Sai do saldo', type: 'select', options: fundOptsArr() }],
+    fields: linked() ? [{ k: 'fundId', label: `${c?.name || ''}: sai do saldo`, type: 'select', options: [['', 'Nenhum (só o Saldo Corrente)'], ...fundOptsArr()] }]
+      : [{ k: 'name', label: 'Nome (igual ao Excel)', req: true }, { k: 'fundId', label: 'Sai do saldo', type: 'select', options: [['', 'Nenhum (só o Saldo Corrente)'], ...fundOptsArr()] }],
     onSave: (d) => { if (c) Object.assign(c, d); else S.cats.push({ id: uid('c'), ...d }); },
     onDelete: () => { S.cats = S.cats.filter((x) => x.id !== c.id); } });
 }
@@ -2190,10 +2364,23 @@ function onClick(ev) {
   if (!t) return;
   const act = t.dataset.act, id = t.dataset.id;
   const tour = tourById(UI.tid);
-  const SAFE = ['tab', 'close-sheet', 'open-tour', 'open-excel', 'back', 't-tab', 'copy', 'exp-checkin', 'exp-excel', 'exp-tour', 'exp-backup', 'copy-backup', 'install', 'sync-now', 'link-on', 'link-off', 'link-share'];
+  const SAFE = ['tab', 'close-sheet', 'open-tour', 'open-excel', 'back', 't-tab', 'copy', 'exp-checkin', 'exp-excel', 'exp-tour', 'exp-backup', 'copy-backup', 'install', 'sync-now', 'link-on', 'link-off', 'link-share', 'reload-sheet', 'pm', 'pf', 'edit-player'];
   if (readOnly() && !SAFE.includes(act)) { toast('Modo de leitura: só os organizadores podem alterar.'); return; }
   switch (act) {
     case 'sync-now': syncNow({ sheet: true }); break;
+    case 'pm': {
+      const cur = UI.pm || monthKey(todayISO());
+      const d = +t.dataset.d;
+      if (!d) UI.pm = ''; else { const m = Math.min(12, Math.max(1, +cur.slice(5, 7) + d)); UI.pm = `${cur.slice(0, 4)}-${pad2(m)}`; if (UI.pm === monthKey(todayISO())) UI.pm = ''; }
+      render(); break;
+    }
+    case 'pf': UI.pf = t.dataset.f; render(); break;
+    case 'reload-sheet': {
+      if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'Toca outra vez para descarregar tudo'; setTimeout(() => { if (t.isConnected) { delete t.dataset.armed; t.textContent = 'Voltar a descarregar tudo do Sheets'; } }, 3500); break; }
+      if (pendingCount()) { toast('Há alterações por enviar. Espera que sincronize primeiro.'); syncNow(); break; }
+      reloadFromSheet().then(() => toast('Tudo descarregado outra vez do Sheets')).catch((e) => toast(e.message));
+      break;
+    }
     case 'link-on': {
       t.disabled = true; t.textContent = 'A ligar…';
       connect($('#linkUrl').value, $('#linkKey').value)
@@ -2270,7 +2457,7 @@ function onClick(ev) {
     case 'exp-tour': exportFile(`torneio-${slug(tourById(id).name)}.json`, JSON.stringify(exportBundle(id), null, 1), 'application/json'); break;
     case 'exp-backup': exportFile(`caixa-bbpt-${todayISO()}.json`, JSON.stringify(exportBundle(), null, 1), 'application/json'); break;
     case 'copy-backup': copyText(JSON.stringify(exportBundle()), 'Cópia de segurança copiada'); break;
-    case 'import': doImport(t.dataset.mode, t); break;
+    case 'import': if (linked()) { toast('Com o Google Sheets ligado, importar está desligado para não estragar os dados partilhados.'); break; } doImport(t.dataset.mode, t); break;
     case 'add-example': addExample(); save(); render(); toast('Torneio de exemplo adicionado'); break;
     case 'rm-example': {
       const ids = S.tournaments.filter((x) => x.example).map((x) => x.id);
@@ -2278,6 +2465,7 @@ function onClick(ev) {
       if (ids.includes(UI.tid)) UI.tid = null; save(); render(); toast('Exemplo apagado'); break;
     }
     case 'reset':
+      if (linked()) { toast('Com o Google Sheets ligado, isto apagaria os dados de todos. Usa "Voltar a descarregar tudo do Sheets".'); break; }
       if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'Toca outra vez: apaga torneios e movimentos'; setTimeout(() => { if (t.isConnected) { delete t.dataset.armed; t.textContent = 'Repor dados iniciais'; } }, 3500); break; }
       S = seed(); UI.tid = null; save(); render(); toast('Dados iniciais repostos'); break;
     case 'install': if (window.__installPrompt) { window.__installPrompt.prompt(); window.__installPrompt = null; t.hidden = true; } break;
@@ -2288,7 +2476,7 @@ function onClick(ev) {
 function onInput(ev) {
   const t = ev.target;
   if (t.id === 'ciSearch') { UI.q = t.value; const r = $('#ciResults'); if (r) r.innerHTML = ciResults(tourById(UI.tid)); }
-  if (t.id === 'pSearch') { UI.pq = t.value; const q = UI.pq.trim().toLowerCase(); $('#pList').innerHTML = playerRows(S.players.filter((p) => !q || p.name.toLowerCase().includes(q)), monthKey(todayISO())); }
+  if (t.id === 'pSearch') { UI.pq = t.value; $('#pList').innerHTML = playerRows(playerFilter(), UI.pm || monthKey(todayISO())); }
 }
 function onKey(ev) {
   if (ev.key === 'Escape' && !$('#sheet').hidden) closeSheet();
@@ -2301,6 +2489,7 @@ function onKey(ev) {
 function onChange(ev) {
   const t = ev.target;
   if (t.id === 'treasurer') { S.settings.treasurerId = t.value; save(); render(); }
+  if (t.id === 'meLocal') { LINK.meLocal = t.value; saveLink(); render(); }
   if (t.id === 'withPlayers') { UI.withPlayers = t.checked; render(); }
 }
 
