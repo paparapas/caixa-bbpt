@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Caixa BBPT">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/favicon.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3.3.0">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3.3.1">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400&display=swap">
 <style>
 :root { padding-top: env(safe-area-inset-top, 0px); }
@@ -388,12 +388,13 @@ p.verify.ok { color: var(--ok); } p.verify.bad { color: var(--bad); }
 .monthnav .icon-btn { width: 40px; height: 40px; font-size: 1.3rem; }
 .monthnav .icon-btn:disabled { opacity: 0.35; }
 .monthbar .mini-seg { align-self: flex-start; }
+.settle-act.info span { color: var(--muted); font-size: 0.9rem; }
 
 </style>
 </head>
 <body>
 <main id="main" aria-live="polite"></main><nav class="tabbar" aria-label="Navegação"><button data-act="tab" data-tab="torneios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15.9V18h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 13H8a4 4 0 0 1-4-4V6h3zm-1 4v1a2 2 0 0 0 1 1.7V8zm11 0v2.7A2 2 0 0 0 18 9V8z"/></svg><span>Torneios</span></button><button data-act="tab" data-tab="jogadores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-3.3 0-7 1.7-7 4v3h14v-3c0-2.3-3.7-4-7-4zm8-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm1 2h-.6A5.6 5.6 0 0 1 20 17v3h3v-3c0-2-2.5-3.6-5-4z"/></svg><span>Jogadores</span></button><button data-act="tab" data-tab="resumo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg><span>Resumo</span></button><button data-act="tab" data-tab="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Mais</span></button></nav><div id="sheet" hidden></div><div id="toast" role="status" hidden></div>
-<script>window.__PWA__ = true; window.__VERSION__ = '3.3.0';</script>
+<script>window.__PWA__ = true; window.__VERSION__ = '3.3.1';</script>
 <script>
 /* Caixa BBPT — lógica de contas (sem DOM). O check-in por jogador é a base de tudo. */
 'use strict';
@@ -689,29 +690,49 @@ function compute(scope) {
 
 /* O que cada pessoa tem de fazer */
 function actionsFor(C, pid) {
-  const p = C.P[pid];
+  const p = C.P[pid] || { held: 0 };
   const tr = S.settings.treasurerId;
-  if (!p || Math.abs(p.held) < EPS) return [{ cls: 'ok', txt: 'Tudo acertado' }];
-  if (p.held < 0) return [{ cls: 'bad', kind: 'refund', amount: -p.held, txt: `A org deve ${eur(-p.held)} a ${pn(pid)}` }];
+  const isTr = pid === tr || !tr;
+  const pendingAccs = C.accs.filter((a) => a.pending > EPS);
+  if (!isTr || !pendingAccs.length) {
+    if (Math.abs(p.held) < EPS) return [{ cls: 'ok', txt: 'Tudo acertado' }];
+    if (p.held < 0) return [{ cls: 'bad', kind: 'refund', amount: -p.held, txt: `A org deve ${eur(-p.held)} a ${pn(pid)}` }];
+  }
   const out = [];
-  let left = p.held;
-  const storeOut = Object.entries(C.store).map(([id, s]) => ({ id, out: r2(s.due - s.paid) })).filter((x) => x.out > EPS);
-  storeOut.forEach((s) => {
+  let left = Math.max(0, p.held);
+  Object.entries(C.store).map(([id, s]) => ({ id, out: r2(s.due - s.paid) })).filter((x) => x.out > EPS).forEach((s) => {
     if (left < EPS) return;
     const a = r2(Math.min(left, s.out));
     out.push({ cls: 'warn', kind: 'loja', amount: a, storeId: s.id, txt: `Pagar ${eur(a)} à ${storeById(s.id)?.name}` });
     left = r2(left - a);
   });
-  if (left < EPS) return out;
-  if (pid !== tr && tr) { out.push({ cls: 'warn', kind: 'send', amount: left, txt: `Enviar ${eur(left)} a ${pn(tr)}` }); return out; }
-  C.accs.filter((a) => a.pending > EPS).forEach((a) => {
-    if (left < EPS) return;
-    const v = r2(Math.min(left, a.pending));
-    out.push({ cls: 'warn', kind: 'deposit', amount: v, accountId: a.id, txt: `Depositar ${eur(v)} em ${accById(a.id).name}` });
-    left = r2(left - v);
-  });
-  if (left > EPS) out.push({ cls: 'warn', kind: 'deposit', amount: left, accountId: S.accounts[0]?.id, txt: `Depositar ${eur(left)} nas contas da org` });
+  if (!isTr) {
+    if (left > EPS) out.push({ cls: 'warn', kind: 'send', amount: left, txt: `Enviar ${eur(left)} a ${pn(tr)}` });
+    return out;
+  }
+  /* Tesoureiro: plano completo de depósitos, mesmo que parte do dinheiro ainda esteja com outros */
+  const total = r2(pendingAccs.reduce((a, x) => a + x.pending, 0));
+  pendingAccs.forEach((a) => out.push({ cls: 'warn', kind: 'deposit', amount: a.pending, accountId: a.id, txt: `Depositar ${eur(a.pending)} em ${accById(a.id).name}` }));
+  const incoming = Object.keys(C.P).filter((q) => q !== pid).map((q) => ({ id: q, amt: r2(actionsFor(C, q).filter((a) => a.kind === 'send').reduce((x, a) => x + a.amount, 0)) })).filter((x) => x.amt > EPS);
+  const inc = r2(incoming.reduce((x, i) => x + i.amt, 0));
+  const missing = r2(total - left - inc);
+  if (inc > EPS) {
+    const from = incoming.map((i) => `${eur(i.amt)} vêm de ${pn(i.id)}`).join(', ');
+    out.push({ cls: 'info', txt: `Total ${eur(total)}. ${left > EPS ? `Tens ${eur(left)} contigo; ${from}.` : `Ainda não tens nada contigo: ${from}.`} Deposita depois de receberes.` });
+  } else if (pendingAccs.length > 1) {
+    out.push({ cls: 'info', txt: `Total ${eur(total)}.` });
+  }
+  if (missing > EPS) out.push({ cls: 'info', txt: `Faltam ${eur(missing)} que ainda não chegaram a ninguém (ex.: jogadores em dívida ou loja paga do bolso).` });
+  if (missing < -EPS) out.push({ cls: 'warn', kind: 'deposit', amount: -missing, accountId: S.accounts[0]?.id, txt: `Sobram ${eur(-missing)}: deposita nas contas da org ou revê os movimentos` });
   return out;
+}
+
+/* Pessoas com algo a fazer, incluindo o tesoureiro quando há depósitos por fazer */
+function settlePeople(C) {
+  const ids = Object.keys(C.P).filter((pid) => Math.abs(C.P[pid].held) >= EPS);
+  const tr = S.settings.treasurerId;
+  if (tr && !ids.includes(tr) && C.accs.some((a) => a.pending > EPS)) ids.unshift(tr);
+  return ids;
 }
 
 function alertsFor(scope) {
@@ -905,7 +926,7 @@ function discordReport(tid, withPlayers) {
   }
   L.push('');
   L.push('**Acertos**');
-  const pids = Object.keys(C.P);
+  const pids = [...new Set([...settlePeople(C), ...Object.keys(C.P)])];
   if (!pids.length) L.push('• Nada registado.');
   pids.forEach((pid) => L.push(`• ${pn(pid)}: ${actionsFor(C, pid).map((a) => a.cls === 'ok' ? 'tudo acertado ✅' : a.txt.charAt(0).toLowerCase() + a.txt.slice(1)).join('; ')}`));
   if (withPlayers) {
@@ -1242,7 +1263,7 @@ function applyRecords(list) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { ESPECIAL, migrate, mergeSheet, sheetPayload, desiredSheet, markWritten, buildRecords, applyRecords, suggestWeek, excelDeltas, seed, emptyState, setState, getState: () => S, compute, actionsFor, alertsFor, excelPlan, excelCurrent, pendingLaunch, launch, bankView, discordReport, csvCheckin, csvExcel, exportBundle, importData, defaultAmounts, monthlyPaidElsewhere, addExample };
+  module.exports = { settlePeople, ESPECIAL, migrate, mergeSheet, sheetPayload, desiredSheet, markWritten, buildRecords, applyRecords, suggestWeek, excelDeltas, seed, emptyState, setState, getState: () => S, compute, actionsFor, alertsFor, excelPlan, excelCurrent, pendingLaunch, launch, bankView, discordReport, csvCheckin, csvExcel, exportBundle, importData, defaultAmounts, monthlyPaidElsewhere, addExample };
 }
 
 /* Caixa BBPT — ligação ao Google Sheets (script do ficheiro de Finanças) */
@@ -1553,7 +1574,7 @@ function vResumo() {
   const pend = pendingLaunch();
   const C = compute('all');
   const banks = bankView();
-  const people = Object.keys(C.P).filter((pid) => Math.abs(C.P[pid].held) >= EPS).sort((a, b) => (b === meId()) - (a === meId()));
+  const people = settlePeople(C).sort((a, b) => (b === meId()) - (a === meId()));
   const corrente = r2(S.funds.reduce((s, f) => s + (cur.funds[f.id] || 0), 0));
   return `
   <header class="top"><div><p class="eyebrow">Finanças Beyblade PT · Lisboa</p><h1>Caixa</h1></div><div class="top-side">${syncChip()}<p class="today">${fmtDate(todayISO())}</p></div></header>
@@ -1578,7 +1599,7 @@ function vResumo() {
 function settleRow(C, pid, tid) {
   const acts = actionsFor(C, pid);
   return `<li class="settle-row ${acts[0].cls}${pid === meId() ? ' me' : ''}"><div class="settle-who"><b>${esc(pn(pid))}</b>${pid === meId() ? chip('tu', 'ok') : ''}${pid === S.settings.treasurerId ? chip('tesoureiro', 'soft') : ''}</div>
-    <div class="settle-acts">${acts.map((a) => `<div class="settle-act"><span>${esc(a.txt)}</span>${a.kind ? `<button type="button" class="btn small" data-act="quick" data-kind="${a.kind}" data-pid="${pid}" data-amt="${a.amount}" data-acc="${a.accountId || ''}" data-store="${a.storeId || ''}" data-tid="${tid || ''}">Registar</button>` : ''}</div>`).join('')}</div></li>`;
+    <div class="settle-acts">${acts.map((a) => `<div class="settle-act${a.cls === 'info' ? ' info' : ''}"><span>${esc(a.txt)}</span>${a.kind ? `<button type="button" class="btn small" data-act="quick" data-kind="${a.kind}" data-pid="${pid}" data-amt="${a.amount}" data-acc="${a.accountId || ''}" data-store="${a.storeId || ''}" data-tid="${tid || ''}">Registar</button>` : ''}</div>`).join('')}</div></li>`;
 }
 
 /* ---------- Torneios ---------- */
@@ -1862,7 +1883,7 @@ function moveForm(kind, move, preset = {}) {
 
 /* --- Acertos --- */
 function vSettle(t, C) {
-  const pids = Object.keys(C.P).sort((a, b) => (b === meId()) - (a === meId()));
+  const pids = [...new Set([...settlePeople(C), ...Object.keys(C.P)])].sort((a, b) => (b === meId()) - (a === meId()));
   const others = Object.entries(C.recvBy).filter(([, r]) => r.others.length);
   return `
   ${alertList(alertsFor(t.id))}
@@ -1870,7 +1891,7 @@ function vSettle(t, C) {
     ${pids.length ? `<ul class="settle">${pids.map((pid) => settleRow(C, pid, t.id)).join('')}</ul>` : '<p class="muted">Ainda não há dinheiro registado.</p>'}
   </section>
   ${others.length ? `<section class="block"><h2>Pagaram a outro organizador</h2><ul class="kv">${others.map(([pid, r]) => `<li><span>${esc(pn(pid))} recebeu de</span><span>${r.others.map((e) => `${esc(pn(e.playerId))} ${eur(entryTotal(e))}`).join(', ')}</span></li>`).join('')}</ul></section>` : ''}
-  <section class="block"><h2>Conta de cada um</h2><div class="pgrid">${pids.map((pid) => {
+  <section class="block"><h2>Conta de cada um</h2><div class="pgrid">${pids.filter((pid) => C.P[pid]).map((pid) => {
     const p = C.P[pid];
     return `<article class="pcard"><header><h3>${esc(pn(pid))}</h3></header>
       <table class="calc"><tbody>${p.lines.map((l) => `<tr><td>${esc(l.t)}</td><td>${money(l.v, true)}</td></tr>`).join('')}</tbody>
