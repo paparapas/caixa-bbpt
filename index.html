@@ -120,7 +120,6 @@ small, .small { font-size: 0.82rem; }
 .settle-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); border: 1px solid var(--line); border-left-width: 4px; border-radius: 12px; padding: 12px 14px; flex-wrap: wrap; }
 .settle-row.warn { border-left-color: var(--warn); } .settle-row.bad { border-left-color: var(--bad); } .settle-row.ok { border-left-color: var(--ok); }
 .settle-who { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; min-width: 0; flex: 1 1 200px; }
-.settle-who span:last-child { flex-basis: 100%; color: var(--fg); }
 
 .alerts { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
 .alert { display: flex; gap: 10px; align-items: flex-start; padding: 10px 12px; border-radius: 10px; font-size: 0.92rem; }
@@ -158,8 +157,8 @@ small, .small { font-size: 0.82rem; }
 .ev-state { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 4px; }
 
 /* Estatísticas do torneio */
-.stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
-.stats div { background: var(--surface); padding: 10px 12px; display: flex; flex-direction: column; }
+.stats { display: flex; flex-wrap: wrap; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.stats div { background: var(--surface); padding: 10px 12px; display: flex; flex-direction: column; flex: 1 1 30%; min-width: 96px; }
 .stats span { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
 .stats b { font-family: var(--f-display); font-size: 1.45rem; font-weight: 600; }
 .stats small { font-size: 0.85rem; color: var(--muted); font-family: var(--f-body); }
@@ -256,399 +255,676 @@ small, .small { font-size: 0.82rem; }
 }
 @media (prefers-reduced-motion: reduce) { .sheet { animation: none; } }
 
+/* ---------- v2: check-in e afins ---------- */
+.fundcard.total { background: linear-gradient(160deg, var(--surface-2) 0%, var(--surface) 100%); color: var(--fg); border: 1px solid var(--line); box-shadow: none; }
+.fundcard.total .fc-acc { color: var(--muted); } .fundcard.total h3 { color: var(--fg); } .fundcard.total::after { display: none; }
+.funds .fc-big { font-size: 2.2rem; margin-bottom: 0; }
+.stats .debt b { color: var(--warn); }
+.compline { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 0.9rem; color: var(--muted); }
+.compline b { color: var(--fg); font-variant-numeric: tabular-nums; }
+.seg { grid-template-columns: repeat(5, 1fr); }
+.seg button { font-size: 0.8rem; padding: 9px 2px; }
+.ev-tools { align-items: center; flex-wrap: wrap; }
+
+.addbox { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; }
+#ciSearch, #pSearch { font: inherit; font-size: 17px; color: var(--fg); background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; min-height: 48px; width: 100%; }
+#ciSearch:focus, #pSearch:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.newmethod { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.results { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.result { width: 100%; text-align: left; font: inherit; font-weight: 600; color: var(--fg); background: var(--surface-2); border: 1px solid transparent; border-radius: 10px; padding: 11px 12px; cursor: pointer; display: flex; align-items: center; gap: 8px; min-height: 46px; }
+.result:hover, .result:focus-visible { border-color: var(--accent); }
+.result.new { color: var(--accent); background: var(--accent-soft); }
+
+.mini-seg { display: inline-flex; background: var(--surface-2); border-radius: 10px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.mini-seg button { font: inherit; font-size: 0.84rem; font-weight: 600; border: 0; background: transparent; color: var(--muted); padding: 7px 10px; border-radius: 8px; cursor: pointer; min-height: 36px; }
+.mini-seg button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: var(--shadow); }
+.mini-seg button.m-mbway[aria-pressed="true"] { background: var(--accent); color: var(--accent-ink); }
+.mini-seg button.m-num[aria-pressed="true"] { background: var(--cash-bg); color: var(--cash); }
+.mini-seg button.m-own[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); }
+.mini-seg button.m-debt[aria-pressed="true"] { background: var(--warn-bg); color: var(--warn); }
+
+.ci-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.ci { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.ci.is-debt { border-color: var(--warn); background: linear-gradient(0deg, var(--warn-bg), var(--warn-bg)) padding-box; }
+.ci-head { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.ci-name { font-weight: 700; font-size: 1.02rem; min-width: 0; overflow-wrap: anywhere; }
+.ci-total { margin-left: auto; font-family: var(--f-display); font-size: 1.3rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.icon-btn.sm { width: 34px; height: 34px; flex: none; font-size: 1.1rem; line-height: 1; }
+.ci-comps { display: flex; flex-wrap: wrap; gap: 6px; }
+.tog { font: inherit; font-size: 0.84rem; font-weight: 600; border-radius: 999px; padding: 6px 11px; border: 1.5px dashed var(--line); background: transparent; color: var(--muted); cursor: pointer; min-height: 34px; }
+.tog[aria-pressed="true"] { border-style: solid; border-color: var(--accent); background: var(--accent-soft); color: var(--accent); }
+.tog.paid { border-style: solid; border-color: transparent; background: var(--ok-bg); color: var(--ok); }
+.tog.dup[aria-pressed="true"] { border-color: var(--warn); background: var(--warn-bg); color: var(--warn); }
+.ci-pay { align-self: flex-start; }
+
+.storecard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; }
+.sc-head { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.sc-meta { display: flex; gap: 22px; margin: 0; flex-wrap: wrap; }
+.sc-meta dt { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.sc-meta dd { margin: 0; font-family: var(--f-display); font-size: 1.35rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.storecard .btn { align-self: flex-start; }
+
+.settle-row { align-items: flex-start; }
+.settle-acts { display: flex; flex-direction: column; gap: 6px; flex: 1 1 240px; min-width: 0; }
+.settle-act { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.settle-who { flex: 0 1 auto; }
+
+.namechips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.namechips li { background: var(--ok-bg); color: var(--ok); font-weight: 600; font-size: 0.86rem; padding: 4px 10px; border-radius: 999px; }
+.months { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.months .check { font-size: 0.9rem; }
+.data tr.hl td { background: var(--warn-bg); }
+.data tr.sum td { border-top: 1.5px solid var(--fg); font-weight: 600; }
+.data td.pos, .pos { color: var(--ok); } .neg { color: var(--bad); }
+p.verify { font-weight: 600; }
+p.verify.ok { color: var(--ok); } p.verify.bad { color: var(--bad); }
+.alert.warn, p.alert { display: flex; gap: 10px; align-items: flex-start; }
+.pad { padding: 12px 14px; }
+@media (max-width: 420px) { .seg button { font-size: 0.74rem; } .months { grid-template-columns: repeat(3, 1fr); } }
+
+.funds { grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+.funds .fundcard { padding: 14px 14px 12px; }
+.funds .fc-big { font-size: 1.75rem; margin-top: 4px; }
+.funds .fundcard h3 { font-size: 0.95rem; }
+.bankcards { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 10px; }
+.bankcard { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.bankcard header { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.bankcard dl { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin: 0; }
+.bankcard dt { font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.bankcard dd { margin: 0; font-weight: 600; font-variant-numeric: tabular-nums; }
+.data.compact th, .data.compact td { padding: 8px 9px; }
+
+.xlist { list-style: none; margin: 0; padding: 0; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; }
+.xlist li { display: flex; justify-content: space-between; align-items: center; gap: 6px 14px; padding: 10px 14px; flex-wrap: wrap; }
+.xlist li + li { border-top: 1px solid var(--line); }
+.xlist li.hl { background: var(--warn-bg); }
+.xlist li.sum { border-top: 1.5px solid var(--fg); font-weight: 600; }
+.x-name { display: flex; flex-direction: column; min-width: 0; flex: 1 1 150px; overflow-wrap: anywhere; }
+.x-name small { font-size: 0.78rem; }
+.x-vals { display: flex; gap: 10px; align-items: baseline; font-variant-numeric: tabular-nums; white-space: nowrap; margin-left: auto; }
+.x-vals b { font-size: 1.05rem; }
+.x-fix { flex-basis: 100%; font-size: 0.88rem; }
+
 </style>
 </head>
 <body>
-<main id="main" aria-live="polite"></main><nav class="tabbar" aria-label="Navegação"><button data-act="tab" data-tab="resumo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg><span>Resumo</span></button><button data-act="tab" data-tab="torneios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15.9V18h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 13H8a4 4 0 0 1-4-4V6h3zm-1 4v1a2 2 0 0 0 1 1.7V8zm11 0v2.7A2 2 0 0 0 18 9V8z"/></svg><span>Torneios</span></button><button data-act="tab" data-tab="movimentos"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3 1.4-1.4L21.8 8l-5.4 5.4L15 12l3-3H7zm10 10H6l3 3-1.4 1.4L2.2 16l5.4-5.4L9 12l-3 3h11z"/></svg><span>Movimentos</span></button><button data-act="tab" data-tab="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Mais</span></button></nav><div id="sheet" hidden></div><div id="toast" role="status" hidden></div>
+<main id="main" aria-live="polite"></main><nav class="tabbar" aria-label="Navegação"><button data-act="tab" data-tab="torneios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15.9V18h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 13H8a4 4 0 0 1-4-4V6h3zm-1 4v1a2 2 0 0 0 1 1.7V8zm11 0v2.7A2 2 0 0 0 18 9V8z"/></svg><span>Torneios</span></button><button data-act="tab" data-tab="jogadores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-3.3 0-7 1.7-7 4v3h14v-3c0-2.3-3.7-4-7-4zm8-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm1 2h-.6A5.6 5.6 0 0 1 20 17v3h3v-3c0-2-2.5-3.6-5-4z"/></svg><span>Jogadores</span></button><button data-act="tab" data-tab="resumo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg><span>Resumo</span></button><button data-act="tab" data-tab="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Mais</span></button></nav><div id="sheet" hidden></div><div id="toast" role="status" hidden></div>
 <script>window.__PWA__ = true;</script>
 <script>
-/* Caixa BBPT — lógica de contas (sem DOM). */
+/* Caixa BBPT — lógica de contas (sem DOM). O check-in por jogador é a base de tudo. */
 'use strict';
 
-const KEY = 'caixa-bbpt-v1';
-const PHYS = 'Físico';
-const METHODS = ['MBWAY', 'Físico', 'Transferência'];
+const KEY = 'caixa-bbpt-v2';
 const EPS = 0.005;
+const METHOD = { mbway: 'MBWAY', num: 'Numerário', own: 'Próprio', debt: 'Em dívida' };
+const MOVE_METHODS = ['MBWAY', 'Numerário', 'Transferência'];
+const SECTIONS = ['Income Ligas', 'Income Estádios', 'Income Misc'];
+const MONTHS = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
 
 let S = null;
 function setState(s) { S = s; }
 
-const uid = (p) => p + '_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
+const uid = (p) => p + '_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-3);
 const r2 = (n) => Math.round((+n || 0) * 100) / 100;
-const num = (v) => { const n = parseFloat(String(v ?? '').replace(/\s/g, '').replace(',', '.')); return isFinite(n) ? n : 0; };
+const num = (v) => { const n = parseFloat(String(v ?? '').replace(/\s/g, '').replace('€', '').replace(',', '.')); return isFinite(n) ? n : 0; };
 const eur = (n) => r2(n).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' €';
 const eurPlain = (n) => r2(n).toLocaleString('pt-PT', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false });
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const fmtDate = (d) => (d ? d.split('-').reverse().join('/') : '');
 const pad2 = (n) => String(n).padStart(2, '0');
 const todayISO = () => { const d = new Date(); return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`; };
+const monthKey = (d) => String(d || todayISO()).slice(0, 7);
+const monthName = (k) => MONTHS[(+String(k).slice(5, 7) || 1) - 1];
+const slugId = (s) => 'p_' + String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_|_$/g, '');
 
-/* ---------- Dados iniciais: Semana 5 da Liga Fénix Negra S2 ---------- */
-function seed() {
-  const P = 'p_paparapas', H = 'p_hyero', FI = 'p_fipi';
-  const L = 'f_liga', E = 'f_est', J = 'f_loja';
+/* ---------- Dados iniciais ---------- */
+const PLAYER_LIST = ['Lyon', 'paparapas', 'Shaggy_10', 'XAZUS', 'BernaB7999', 'Amostra', 'Bufos (Bufus)', 'KamenXtreme', 'HaalKein', 'Obscythe', 'Pedroosga (Osga)', 'Velos77', 'Zh3l', 'OneZ (Enzo)', 'Suricate_PT (Fábio)', 'Gordinho PT (Bernardo)', 'MiguelBigG', 'mouga', 'diogo_carepo', 'Gonçalo_Galaxy', 'WydeX', 'AC13', 'Zero', 'Gabe0Use / IchiSenka', 'Hyero', 'Juanlamaquina (Benitez)', 'Ordnance', 'lok0game (Carlos)', 'Alpha_Trion', 'Zás', 'Dilion', 'Lua04', 'XDrey', 'iaseru (Ares)', 'Martim99', 'Refilona11', 'Velkayne', 'UKARD (Draku)', 'YellyBun', 'YunoRyu', 'Zensyth', 'ChaoticSwizzler/Swizz101', 'Wez', 'MrSiul', 'Dexter', 'Flaah', 'ElConde', 'Yuto08', 'Ezio', 'Tiaginho', 'Maniac_pt', 'Raulzitoj', 'JCabaco', 'EzioMiauditore', 'Kum4_24 / Manju_24', 'Weightless', 'Heliacoptro', 'Aluber', 'KrisWilliams', 'TheClerk (Sérgio crit)', 'Oioioi', 'Lili999', 'Bonvanda', 'Blind_and_deaf', 'Rinkusuya', 'DEKanger', 'Crunchouille', 'Starboii315', '_medina_', 'Fipi', 'Obryan1', 'Kiruano', 'Bé', 'Gaara', 'Ryuga', 'Embrulha', 'Xernobil', 'Skytribal05', 'Apolo', 'Grim_Reaper_', 'Juju', 'shrupik', 'Ness', 'Izita', 'Josegron'];
+/* Marcados em "outubro" na folha Users/Estadios (foto de 13/10). As linhas 5–9 e as depois de Skytribal05 não estavam visíveis. */
+const OCT_PAID = ['Bufos (Bufus)', 'KamenXtreme', 'HaalKein', 'Obscythe', 'Pedroosga (Osga)', 'Velos77', 'OneZ (Enzo)', 'WydeX', 'Gabe0Use / IchiSenka', 'Hyero', 'Juanlamaquina (Benitez)', 'Alpha_Trion', 'Zás', 'iaseru (Ares)', 'UKARD (Draku)', 'ChaoticSwizzler/Swizz101', 'Wez', 'MrSiul', 'JCabaco', 'Kum4_24 / Manju_24', 'Aluber', 'TheClerk (Sérgio crit)', 'Starboii315', 'Fipi', 'Kiruano', 'Xernobil'];
+
+function stdComps(storeId, mainLabel, mainLine) {
+  return [
+    { key: 'loja', label: 'Loja', price: 2, kind: 'loja', storeId, def: true },
+    { key: 'main', label: mainLabel, price: 1, kind: 'line', lineId: mainLine, def: true },
+    { key: 'mensal', label: 'Mensal estádios', price: 2, kind: 'line', lineId: 'l_mens', def: true, monthly: true },
+    { key: 'extra', label: 'Contribuição adicional', price: 1, kind: 'line', lineId: 'l_mens', def: false, extra: true },
+  ];
+}
+
+function baseState() {
+  const P = 'p_paparapas', H = 'p_hyero';
+  const players = PLAYER_LIST.map((name) => ({ id: slugId(name), name, org: name === 'paparapas' || name === 'Hyero', months: {} }));
+  OCT_PAID.forEach((n) => { const p = players.find((x) => x.name === n); if (p) p.months['2026-10'] = true; });
   return {
-    version: 1,
-    settings: { org: 'BBPT', treasurerId: P, csvPT: true, seeded: true },
-    people: [
-      { id: P, name: 'Paparapas', organizer: true },
-      { id: H, name: 'Hyero', organizer: true },
-      { id: FI, name: 'Fipi', organizer: false },
+    version: 2,
+    settings: { treasurerId: P, newMethod: 'mbway' },
+    players,
+    accounts: [
+      { id: 'a_liga', name: 'BBPT Liga', opening: 90, openingDate: '2026-10-13' },
+      { id: 'a_mat', name: 'BBPT Material', opening: 529.2, openingDate: '2026-10-13' },
     ],
     funds: [
-      { id: L, name: 'Liga Fénix', kind: 'interno', account: 'BBPT Liga', opening: 90, openingDate: '2026-10-10' },
-      { id: E, name: 'Estádios e Material', kind: 'interno', account: 'BBPT Material', opening: 529.2, openingDate: '2026-10-10' },
-      { id: J, name: 'Loja Fénix', kind: 'externo', account: '', opening: 0, openingDate: '' },
+      { id: 'f_fenix', name: 'Liga Fénix', accountId: 'a_liga', saldo: 116 },
+      { id: 'f_critx', name: 'Liga Critical X', accountId: 'a_liga', saldo: 0 },
+      { id: 'f_est', name: 'Estádios e Material', accountId: 'a_mat', saldo: 539.2 },
     ],
-    events: [
-      {
-        id: 'e_s2w5', name: 'Liga Fénix Negra S2 · Semana 5', date: '2026-10-11', organizerId: H,
-        notes: 'A divisão por jogador entre MBWAY e físico foi estimada a partir do relatório da Hyero. Os totais (45 € MBWAY + 45 € físico) estão certos.',
-        components: [
-          { id: 'c_loja', label: 'Loja', fundId: J, price: 2, excel: '', def: true },
-          { id: 'c_liga', label: 'Liga', fundId: L, price: 1, excel: 'Liga Fénix Negra - Season 2', def: true },
-          { id: 'c_est', label: 'Contribuição estádios', fundId: E, price: 1, excel: 'Contribuições Mensais', def: false },
-        ],
-      },
-      {
-        id: 'e_outro', name: 'Outro evento', date: '2026-10-11', organizerId: P,
-        notes: 'Valor de outro evento destinado ao fundo de estádios e material. Confirma o nome, a data e a linha do Excel.',
-        components: [{ id: 'c_o_est', label: 'Estádios e material', fundId: E, price: 14, excel: '', def: true }],
-      },
+    lines: [
+      { id: 'l_lfn1', section: 'Income Ligas', name: 'Liga Fénix Negra - Season 1', fundId: 'f_fenix', value: 243 },
+      { id: 'l_lcx1', section: 'Income Ligas', name: 'Liga Critical X - Season 1', fundId: 'f_critx', value: 58 },
+      { id: 'l_lfn2', section: 'Income Ligas', name: 'Liga Fénix Negra - Season 2', fundId: 'f_fenix', value: 116 },
+      { id: 'l_mens', section: 'Income Estádios', name: 'Contribuições Mensais', fundId: 'f_est', value: 468 },
+      { id: 'l_doa', section: 'Income Estádios', name: 'Doações para estádios e material', fundId: 'f_est', value: 5 },
+      { id: 'l_exc', section: 'Income Estádios', name: 'Excedente Liga Fénix Season 1', fundId: 'f_est', value: 33 },
+      { id: 'l_casfn', section: 'Income Estádios', name: 'Total Fénix Negra - Eventos Casuais', fundId: 'f_est', value: 170 },
+      { id: 'l_cascx', section: 'Income Estádios', name: 'Total Critical - Eventos Casuais', fundId: 'f_est', value: 74 },
+      { id: 'l_fecx', section: 'Income Estádios', name: 'Fundos Excedentes - Critical X', fundId: 'f_est', value: 50 },
+      { id: 'l_heim', section: 'Income Misc', name: 'Torneio Heimdall Geek Fest 2026', fundId: 'f_est', value: 18 },
     ],
-    entries: [
-      { id: 'n1', eventId: 'e_s2w5', personId: P, label: '', qty: 1, amounts: { c_loja: 2, c_liga: 1 }, method: 'MBWAY', receivedBy: P, paid: true },
-      { id: 'n2', eventId: 'e_s2w5', personId: FI, label: '', qty: 1, amounts: { c_loja: 2, c_liga: 1 }, method: 'MBWAY', receivedBy: P, paid: true },
-      { id: 'n3', eventId: 'e_s2w5', personId: null, label: 'Jogadores (MBWAY)', qty: 13, amounts: { c_loja: 2, c_liga: 1 }, method: 'MBWAY', receivedBy: H, paid: true },
-      { id: 'n4', eventId: 'e_s2w5', personId: null, label: 'Jogadores (físico)', qty: 11, amounts: { c_loja: 2, c_liga: 1 }, method: PHYS, receivedBy: H, paid: true },
-      { id: 'n5', eventId: 'e_s2w5', personId: null, label: 'Contribuições mensais', qty: 12, amounts: { c_est: 1 }, method: PHYS, receivedBy: H, paid: true },
-      { id: 'n6', eventId: 'e_outro', personId: null, label: 'Receita do evento', qty: 1, amounts: { c_o_est: 14 }, method: 'MBWAY', receivedBy: P, paid: true },
+    cats: [
+      { id: 'c_premios', name: 'Prémios Liga Fénix', fundId: 'f_fenix' },
+      { id: 'c_exccx', name: 'Excedentes Liga Critical X', fundId: 'f_critx' },
+      { id: 'c_miscfn', name: 'Misc Liga Fénix', fundId: 'f_fenix' },
+      { id: 'c_est', name: 'Estádios e Material', fundId: 'f_est' },
     ],
-    moves: [
-      { id: 'm1', eventId: 'e_s2w5', date: '2026-10-11', type: 'pagamento', by: H, fundId: J, fromFundId: '', amount: 52, own: 10, method: PHYS, desc: 'Pagamento à loja (42 € da org + 10 € da Hyero)' },
-      { id: 'm2', eventId: 'e_s2w5', date: '2026-10-12', type: 'transferencia', from: H, to: P, amount: 22, method: 'MBWAY', desc: 'Envio da Hyero' },
-      { id: 'm3', eventId: null, date: '2026-10-13', type: 'pagamento', by: 'org', fundId: E, fromFundId: E, amount: 12, own: 0, method: 'Transferência', desc: 'Pagamento danos Loja Fénix (substituição de cadeira partida)' },
+    stores: [{ id: 's_fenix', name: 'Loja Fénix' }, { id: 's_critx', name: 'Loja Critical X' }],
+    types: [
+      { id: 't_lfn', name: 'Liga Fénix Negra', comps: stdComps('s_fenix', 'Liga', 'l_lfn2') },
+      { id: 't_cfn', name: 'Evento casual Fénix Negra', comps: stdComps('s_fenix', 'Semanal estádios', 'l_casfn') },
+      { id: 't_lcx', name: 'Liga Critical X', comps: stdComps('s_critx', 'Liga', 'l_lcx1') },
+      { id: 't_ccx', name: 'Evento casual Critical X', comps: stdComps('s_critx', 'Semanal estádios', 'l_cascx') },
     ],
+    tournaments: [], entries: [], moves: [],
+    _ids: { P, H },
   };
 }
 
-function emptyState() {
-  return { version: 1, settings: { org: 'BBPT', treasurerId: '', csvPT: true, seeded: false }, people: [], funds: [], events: [], entries: [], moves: [] };
+function addExample(st) {
+  const s = st || S;
+  const tid = 't_exemplo_s2w5';
+  if (s.tournaments.some((t) => t.id === tid)) return;
+  const type = s.types.find((t) => t.id === 't_lfn');
+  s.tournaments.unshift({ id: tid, name: 'EXEMPLO · Liga Fénix Negra S2 · Semana 5', date: '2026-10-11', typeId: 't_lfn', organizerId: 'p_hyero', comps: JSON.parse(JSON.stringify(type.comps)), notes: 'Exemplo para veres a app a funcionar. Os totais são os reais da Semana 5, mas os jogadores foram distribuídos ao acaso. Não conta para os saldos nem para o Excel. Apaga-o em Editar.', example: true, launched: null });
+  const add = (name, method, recv, mensal) => {
+    const amt = { loja: 2, main: 1 }; if (mensal) amt.mensal = 2;
+    s.entries.push({ id: uid('n'), tid, playerId: slugId(name), amt, method, recv });
+  };
+  add('paparapas', 'own', 'p_paparapas');
+  add('Fipi', 'mbway', 'p_paparapas');
+  add('Hyero', 'own', 'p_hyero');
+  ['Lyon', 'Shaggy_10', 'XAZUS', 'BernaB7999', 'KamenXtreme', 'HaalKein', 'Pedroosga (Osga)', 'OneZ (Enzo)', 'Gabe0Use / IchiSenka', 'Juanlamaquina (Benitez)', 'Alpha_Trion', 'Zás', 'iaseru (Ares)'].forEach((n) => add(n, 'mbway', 'p_hyero'));
+  ['Bufos (Bufus)', 'Obscythe', 'Velos77', 'WydeX', 'Wez', 'MrSiul'].forEach((n) => add(n, 'num', 'p_hyero', true));
+  ['Amostra', 'Zh3l', 'Dilion', 'XDrey'].forEach((n) => add(n, 'num', 'p_hyero'));
+  s.moves.push({ id: uid('m'), tid, date: '2026-10-11', kind: 'loja', by: 'p_hyero', storeId: 's_fenix', amount: 52, cash: 42, own: 10, desc: 'Pagamento à Loja Fénix' });
+  s.moves.push({ id: uid('m'), tid, date: '2026-10-12', kind: 'envio', from: 'p_hyero', to: 'p_paparapas', amount: 22, method: 'MBWAY', desc: '' });
 }
+
+function seed() { const s = baseState(); delete s._ids; addExample(s); return s; }
+function emptyState() { const s = baseState(); delete s._ids; s.players = []; return s; }
 
 /* ---------- Pesquisa ---------- */
-const personById = (id) => S.people.find((p) => p.id === id);
+const playerById = (id) => S.players.find((p) => p.id === id);
+const tourById = (id) => S.tournaments.find((t) => t.id === id);
+const lineById = (id) => S.lines.find((l) => l.id === id);
 const fundById = (id) => S.funds.find((f) => f.id === id);
-const eventById = (id) => S.events.find((e) => e.id === id);
-const pn = (id) => (id === 'org' ? 'Conta da org' : personById(id)?.name || '—');
-const fn = (id) => fundById(id)?.name || '—';
-const isExt = (fid) => fundById(fid)?.kind === 'externo';
+const accById = (id) => S.accounts.find((a) => a.id === id);
+const catById = (id) => S.cats.find((c) => c.id === id);
+const storeById = (id) => S.stores.find((s) => s.id === id);
+const typeById = (id) => S.types.find((t) => t.id === id);
+const pn = (id) => (String(id || '').startsWith('acc:') ? accById(id.slice(4))?.name || 'Conta da org' : playerById(id)?.name || '—');
+const organizers = () => S.players.filter((p) => p.org);
+const isExample = (tid) => !!tourById(tid)?.example;
+const compOf = (t, key) => t?.comps.find((c) => c.key === key);
+const entryTotal = (e) => r2(Object.values(e.amt || {}).reduce((s, v) => s + num(v), 0));
+const lineFund = (lineId) => lineById(lineId)?.fundId;
+const fundAcc = (fundId) => fundById(fundId)?.accountId;
 
-function entryParts(e) {
-  const ev = eventById(e.eventId);
-  if (!ev) return [];
-  return ev.components
-    .filter((c) => e.amounts && e.amounts[c.id] != null && num(e.amounts[c.id]) !== 0)
-    .map((c) => ({ comp: c, unit: num(e.amounts[c.id]), total: r2(num(e.amounts[c.id]) * (e.qty || 1)) }));
+/* Já pagou a mensal deste mês? (marcação manual/Excel ou noutra inscrição) */
+function monthlyPaidElsewhere(playerId, month, exceptEntryId) {
+  const p = playerById(playerId);
+  if (p?.months?.[month]) return { how: 'excel' };
+  for (const e of S.entries) {
+    if (e.id === exceptEntryId || e.playerId !== playerId) continue;
+    const t = tourById(e.tid);
+    if (!t || t.example || monthKey(t.date) !== month) continue;
+    const has = t.comps.some((c) => c.monthly && e.amt[c.key] != null);
+    if (has) return { how: 'app', t };
+  }
+  return null;
 }
-const entryTotal = (e) => r2(entryParts(e).reduce((s, p) => s + p.total, 0));
-const entryName = (e) => (e.personId ? pn(e.personId) : e.label || 'Sem nome');
-const moveAmount = (m) => (m.type === 'deposito' ? r2((m.allocs || []).reduce((s, a) => s + num(a.amount), 0)) : r2(m.amount));
+
+function defaultAmounts(t, playerId) {
+  const amt = {};
+  t.comps.forEach((c) => {
+    if (!c.def) return;
+    if (c.monthly && !t.example && monthlyPaidElsewhere(playerId, monthKey(t.date))) return;
+    amt[c.key] = c.price;
+  });
+  return amt;
+}
 
 /* ---------- Cálculo ----------
-   Para cada pessoa: dinheiro da org que ainda está com ela (net).
-     net = recebido + recebido de outros − enviado − pago − depositado + reembolsado
-   O que alguém pôs do próprio bolso aparece sozinho: o pagamento sai por inteiro,
-   por isso o net desce e a org passa a dever-lhe (net negativo) ou ela deve menos.
-   Para cada fundo interno:
-     saldo     = abertura + receitas − despesas
-     na conta  = abertura + depósitos − saídas da conta
-     em trânsito = saldo − na conta  (dinheiro que está com pessoas)
-   Verificação: Σ net das pessoas = Σ em trânsito + Σ por pagar a fundos externos. */
-function compute(evId) {
-  const scoped = evId !== undefined;
-  const inScope = (x) => !scoped || x.eventId === evId;
-  const P = {};
-  const F = {};
-  const person = (id) => (P[id] ||= { id, recv: {}, recvTotal: 0, tin: 0, tout: 0, paid: 0, own: 0, dep: 0, reimb: 0, physIn: 0, physOut: 0, lines: [], net: 0, physLeft: 0 });
-  const fund = (id) => (F[id] ||= { id, alloc: 0, exp: 0, dep: 0, bankOut: 0, paidExt: 0, opening: 0 });
-  S.funds.forEach((f) => { fund(f.id).opening = scoped ? 0 : num(f.opening); });
+   Âmbito: um torneio (tid), 'geral' (movimentos sem torneio) ou 'all' (tudo menos exemplos).
+   Por pessoa, "tem" = dinheiro da org que ainda está com ela:
+     recebido + recebido de outros − enviado − pago (loja/despesas) − depositado + reembolsado
+   Positivo: tem de entregar. Negativo: a org deve-lhe (pôs do bolso). */
+function inScope(tid, scope) {
+  if (scope === 'all') return !tid || !isExample(tid);
+  if (scope === 'geral') return !tid;
+  return tid === scope;
+}
 
-  let unpaid = 0, unpaidN = 0, count = 0, extraN = 0;
-  const recvByMethod = {};
-  S.entries.filter(inScope).forEach((e) => {
+function compute(scope) {
+  const P = {}, line = {}, fundExp = {}, fundExpP = {}, bank = {}, store = {};
+  const person = (id) => (P[id] ||= { id, byMethod: {}, recv: 0, cashIn: 0, cashOut: 0, own: 0, held: 0, lines: [], ownFee: 0 });
+  const st = (id) => (store[id] ||= { due: 0, recv: 0, paid: 0, debt: 0 });
+  const addLine = (id, v) => { line[id] = r2((line[id] || 0) + v); };
+  const addBank = (acc, v) => { bank[acc] = r2((bank[acc] || 0) + v); };
+  let players = 0, debtN = 0, debtV = 0;
+  const byMethod = {}, byComp = {};
+  const recvBy = {};
+
+  S.entries.forEach((e) => {
+    if (!inScope(e.tid, scope)) return;
+    const t = tourById(e.tid);
+    if (!t) return;
+    players++;
     const tot = entryTotal(e);
-    if (!e.paid) { unpaid += tot; unpaidN += e.qty || 1; return; }
-    if (entryParts(e).some((pt) => pt.comp.def !== false)) count += e.qty || 1; else extraN += e.qty || 1;
-    recvByMethod[e.method] = r2((recvByMethod[e.method] || 0) + tot);
-    const p = person(e.receivedBy || 'org');
-    p.recv[e.method] = r2((p.recv[e.method] || 0) + tot);
-    p.recvTotal += tot;
-    if (e.method === PHYS) p.physIn += tot;
-    entryParts(e).forEach((pt) => { fund(pt.comp.fundId).alloc += pt.total; });
+    const paid = e.method !== 'debt';
+    byMethod[e.method] = r2((byMethod[e.method] || 0) + tot);
+    if (!paid) { debtN++; debtV = r2(debtV + tot); }
+    Object.entries(e.amt).forEach(([k, v]) => {
+      const c = compOf(t, k); if (!c) return;
+      v = num(v);
+      const bk = c.label;
+      byComp[bk] = r2((byComp[bk] || 0) + (paid ? v : 0));
+      if (c.kind === 'loja') { const s = st(c.storeId); s.due = r2(s.due + v); if (paid) s.recv = r2(s.recv + v); else s.debt = r2(s.debt + v); }
+      else if (paid) addLine(c.lineId, v);
+    });
+    if (paid) {
+      const p = person(e.recv);
+      p.byMethod[e.method] = r2((p.byMethod[e.method] || 0) + tot);
+      p.recv = r2(p.recv + tot);
+      if (e.method === 'num') p.cashIn = r2(p.cashIn + tot);
+      if (e.method === 'own') p.ownFee = r2(p.ownFee + tot);
+      const rb = (recvBy[e.recv] ||= { n: 0, v: 0, others: [] });
+      rb.n++; rb.v = r2(rb.v + tot);
+      if (t.organizerId && e.recv !== t.organizerId && e.playerId !== e.recv) rb.others.push(e);
+    }
   });
 
-  S.moves.filter(inScope).forEach((m) => {
-    const amt = moveAmount(m);
-    if (m.type === 'pagamento') {
-      const ext = isExt(m.fundId);
-      if (ext) fund(m.fundId).paidExt += amt; else fund(m.fundId).exp += amt;
-      if (m.by === 'org') {
-        fund(m.fromFundId || m.fundId).bankOut += amt;
-      } else {
-        const p = person(m.by);
-        const own = r2(m.own || 0);
-        p.paid += amt; p.own += own;
-        if (m.method === PHYS) p.physOut += amt - own;
-        p.lines.push({ t: `Pago a ${fn(m.fundId)}` + (own > 0 ? ` (${eur(own)} do próprio bolso)` : ''), v: -amt, m });
-      }
-    } else if (m.type === 'transferencia') {
-      const a = person(m.from), b = person(m.to);
-      a.tout += amt; b.tin += amt;
-      if (m.method === PHYS) { a.physOut += amt; b.physIn += amt; }
-      a.lines.push({ t: `Enviado a ${pn(m.to)}`, v: -amt, m });
-      b.lines.push({ t: `Recebido de ${pn(m.from)}`, v: amt, m });
-    } else if (m.type === 'deposito') {
+  const moves = S.moves.filter((m) => inScope(m.tid, scope));
+  moves.forEach((m) => {
+    const amt = r2(m.amount);
+    const isAcc = (x) => String(x || '').startsWith('acc:');
+    if (m.kind === 'loja') {
       const p = person(m.by);
-      p.dep += amt;
-      if (m.method === PHYS) p.physOut += amt;
-      (m.allocs || []).forEach((a) => { fund(a.fundId).dep += num(a.amount); });
-      p.lines.push({ t: 'Depositado nas contas da org', v: -amt, m });
-    } else if (m.type === 'reembolso') {
+      p.held -= 0; p.lines.push({ t: `Pagou à ${storeById(m.storeId)?.name || 'loja'}` + (m.own ? ` (${eur(m.own)} do próprio bolso)` : ''), v: -amt });
+      p.cashOut = r2(p.cashOut + num(m.cash)); p.own = r2(p.own + num(m.own));
+      p._out = r2((p._out || 0) + amt);
+      const s = st(m.storeId); s.paid = r2(s.paid + amt);
+    } else if (m.kind === 'despesa') {
+      const f = catById(m.catId)?.fundId;
+      fundExp[f] = r2((fundExp[f] || 0) + amt);
+      if (isAcc(m.by)) addBank(m.by.slice(4), -amt);
+      else {
+        const p = person(m.by);
+        p.lines.push({ t: `Pagou despesa: ${m.desc || catById(m.catId)?.name || ''}` + (m.own ? ` (${eur(m.own)} do bolso)` : ''), v: -amt });
+        p.cashOut = r2(p.cashOut + num(m.cash)); p.own = r2(p.own + num(m.own));
+        p._out = r2((p._out || 0) + amt);
+        fundExpP[f] = r2((fundExpP[f] || 0) + amt);
+      }
+    } else if (m.kind === 'receita') {
+      addLine(m.lineId, amt);
+      if (isAcc(m.recv)) addBank(m.recv.slice(4), amt);
+      else {
+        const p = person(m.recv);
+        p.lines.push({ t: `Recebeu: ${m.desc || lineById(m.lineId)?.name || 'receita'}`, v: amt });
+        p._in = r2((p._in || 0) + amt);
+        if (m.method === 'Numerário') p.cashIn = r2(p.cashIn + amt);
+      }
+    } else if (m.kind === 'envio') {
+      const a = person(m.from), b = person(m.to);
+      a._out = r2((a._out || 0) + amt); b._in = r2((b._in || 0) + amt);
+      a.lines.push({ t: `Enviou a ${pn(m.to)} (${m.method})`, v: -amt });
+      b.lines.push({ t: `Recebeu de ${pn(m.from)} (${m.method})`, v: amt });
+      if (m.method === 'Numerário') { a.cashOut = r2(a.cashOut + amt); b.cashIn = r2(b.cashIn + amt); }
+    } else if (m.kind === 'deposito') {
+      const p = person(m.by);
+      p._out = r2((p._out || 0) + amt);
+      p.lines.push({ t: `Depositou em ${accById(m.accountId)?.name || 'conta'}`, v: -amt });
+      if (m.method === 'Numerário') p.cashOut = r2(p.cashOut + amt);
+      addBank(m.accountId, amt);
+    } else if (m.kind === 'reembolso') {
       const p = person(m.to);
-      p.reimb += amt;
-      if (m.method === PHYS) p.physIn += amt;
-      fund(m.fundId).bankOut += amt;
-      p.lines.push({ t: `Reembolso da conta ${fundById(m.fundId)?.account || fn(m.fundId)}`, v: amt, m });
+      p._in = r2((p._in || 0) + amt);
+      p.lines.push({ t: `Reembolso de ${accById(m.accountId)?.name || 'conta'}`, v: amt });
+      addBank(m.accountId, -amt);
     }
   });
 
   Object.values(P).forEach((p) => {
-    const recvLines = Object.entries(p.recv).map(([meth, v]) => ({ t: `Recebido em ${meth}`, v }));
+    const recvLines = Object.entries(p.byMethod).map(([k, v]) => ({ t: k === 'own' ? 'Inscrição própria (sem movimento)' : `Recebeu em ${METHOD[k]}`, v }));
     p.lines = recvLines.concat(p.lines);
-    p.net = r2(p.recvTotal + p.tin - p.tout - p.paid - p.dep + p.reimb);
-    p.physLeft = r2(p.physIn - p.physOut);
-    p.recvTotal = r2(p.recvTotal);
+    p.held = r2(p.recv + (p._in || 0) - (p._out || 0));
+    p.cashLeft = r2(p.cashIn - p.cashOut);
   });
 
-  Object.values(F).forEach((x) => {
-    const f = fundById(x.id);
-    x.kind = f?.kind || 'interno';
-    if (x.kind === 'externo') {
-      x.due = r2(x.alloc); x.paid = r2(x.paidExt); x.outstanding = r2(x.due - x.paid);
-    } else {
-      x.earned = r2(x.opening + x.alloc - x.exp);
-      x.bank = r2(x.opening + x.dep - x.bankOut);
-      x.pending = r2(x.earned - x.bank);
-    }
+  // Fundos e contas
+  const fundInc = {};
+  Object.entries(line).forEach(([lid, v]) => { const f = lineFund(lid); fundInc[f] = r2((fundInc[f] || 0) + v); });
+  const funds = S.funds.map((f) => ({ id: f.id, inc: fundInc[f.id] || 0, exp: fundExp[f.id] || 0, delta: r2((fundInc[f.id] || 0) - (fundExp[f.id] || 0)) }));
+  const accs = S.accounts.map((a) => {
+    const fs = funds.filter((x) => fundAcc(x.id) === a.id);
+    const excel = r2(fs.reduce((s, x) => s + x.delta, 0));
+    const bk = bank[a.id] || 0;
+    return { id: a.id, excel, bank: bk, pending: r2(excel - bk) };
   });
-
-  const sumNet = r2(Object.values(P).reduce((s, p) => s + p.net, 0));
-  const sumPending = r2(Object.values(F).filter((x) => x.kind !== 'externo').reduce((s, x) => s + x.pending, 0));
-  const sumOutstanding = r2(Object.values(F).filter((x) => x.kind === 'externo').reduce((s, x) => s + x.outstanding, 0));
-  const totalRecv = r2(Object.values(recvByMethod).reduce((s, v) => s + v, 0));
-  return { P, F, sumNet, sumPending, sumOutstanding, balanced: Math.abs(sumNet - sumPending - sumOutstanding) < EPS, unpaid: r2(unpaid), unpaidN, count, extraN, recvByMethod, totalRecv };
+  const sumHeld = r2(Object.values(P).reduce((s, p) => s + p.held, 0));
+  const sumPending = r2(accs.reduce((s, a) => s + a.pending, 0));
+  const storeHeld = r2(Object.values(store).reduce((s, x) => s + x.recv - x.paid, 0));
+  return {
+    P, line, funds, accs, store, players, debtN, debtV, byMethod, byComp, recvBy,
+    total: r2(Object.entries(byMethod).filter(([k]) => k !== 'debt').reduce((s, [, v]) => s + v, 0)),
+    sumHeld, sumPending, storeHeld, balanced: Math.abs(sumHeld - sumPending - storeHeld) < EPS,
+  };
 }
 
-/* Texto da ação para uma pessoa */
-function actionFor(pid, net) {
+/* O que cada pessoa tem de fazer */
+function actionsFor(C, pid) {
+  const p = C.P[pid];
   const tr = S.settings.treasurerId;
-  if (Math.abs(net) < EPS) return { txt: 'Tudo acertado', cls: 'ok' };
-  if (net > 0) {
-    if (pid === tr || !tr) return { txt: `Mover ${eur(net)} para as contas da org`, cls: 'warn', kind: 'deposit' };
-    return { txt: `Falta enviar ${eur(net)} a ${pn(tr)}`, cls: 'warn', kind: 'send' };
-  }
-  return { txt: `A org deve ${eur(-net)} a ${pn(pid)}`, cls: 'bad', kind: 'refund' };
-}
-
-/* Divide um valor pelos fundos internos com dinheiro em trânsito */
-function suggestAllocs(amount) {
-  const C = compute();
-  let left = r2(amount);
-  return S.funds.filter((f) => f.kind !== 'externo').map((f) => {
-    const pend = Math.max(0, C.F[f.id]?.pending || 0);
-    const a = r2(Math.min(left, pend));
-    left = r2(left - a);
-    return { fundId: f.id, amount: a };
-  }).map((a, i, arr) => (i === arr.length - 1 && left > 0 ? { ...a, amount: r2(a.amount + left) } : a));
-}
-
-/* Alertas que previnem erros de contas */
-function alertsFor(evId) {
-  const C = compute(evId);
+  if (!p || Math.abs(p.held) < EPS) return [{ cls: 'ok', txt: 'Tudo acertado' }];
+  if (p.held < 0) return [{ cls: 'bad', kind: 'refund', amount: -p.held, txt: `A org deve ${eur(-p.held)} a ${pn(pid)}` }];
   const out = [];
-  const tr = S.settings.treasurerId;
-  if (!tr) out.push({ lvl: 'bad', txt: 'Ainda não escolheste quem é o tesoureiro. Define-o em Mais › Pessoas.' });
-  Object.values(C.P).forEach((p) => {
-    const name = pn(p.id);
-    if (p.physLeft < -EPS) {
-      out.push({ lvl: 'warn', txt: `${name} usou ${eur(-p.physLeft)} em físico a mais do que recebeu. Se foi dinheiro dele(a), indica-o no pagamento em "do próprio bolso".` });
-    }
-    if (p.own > EPS && p.physLeft > EPS) {
-      out.push({ lvl: 'warn', txt: `${name} pôs ${eur(p.own)} do próprio bolso mas ainda devia ter ${eur(p.physLeft)} em físico da org (recebeu ${eur(p.physIn)} em físico). Confirma o valor do físico.` });
-    }
-    if (p.net < -EPS) {
-      out.push({ lvl: 'bad', txt: `A org deve ${eur(-p.net)} a ${name}. Pode descontar no próximo envio ou ser reembolsado(a).` });
-    }
+  let left = p.held;
+  const storeOut = Object.entries(C.store).map(([id, s]) => ({ id, out: r2(s.due - s.paid) })).filter((x) => x.out > EPS);
+  storeOut.forEach((s) => {
+    if (left < EPS) return;
+    const a = r2(Math.min(left, s.out));
+    out.push({ cls: 'warn', kind: 'loja', amount: a, storeId: s.id, txt: `Pagar ${eur(a)} à ${storeById(s.id)?.name}` });
+    left = r2(left - a);
   });
-  Object.values(C.F).forEach((x) => {
-    if (x.kind === 'externo' && Math.abs(x.outstanding) > EPS) {
-      out.push({ lvl: x.outstanding > 0 ? 'warn' : 'bad', txt: x.outstanding > 0 ? `${fn(x.id)}: faltam pagar ${eur(x.outstanding)} (devido ${eur(x.due)}, pago ${eur(x.paid)}).` : `${fn(x.id)}: foi pago ${eur(-x.outstanding)} a mais do que o recebido para esse fim.` });
-    }
+  if (left < EPS) return out;
+  if (pid !== tr && tr) { out.push({ cls: 'warn', kind: 'send', amount: left, txt: `Enviar ${eur(left)} a ${pn(tr)}` }); return out; }
+  C.accs.filter((a) => a.pending > EPS).forEach((a) => {
+    if (left < EPS) return;
+    const v = r2(Math.min(left, a.pending));
+    out.push({ cls: 'warn', kind: 'deposit', amount: v, accountId: a.id, txt: `Depositar ${eur(v)} em ${accById(a.id).name}` });
+    left = r2(left - v);
   });
-  if (C.unpaidN > 0) out.push({ lvl: 'warn', txt: `${C.unpaidN} inscrição(ões) por pagar, no total de ${eur(C.unpaid)}.` });
-  S.entries.filter((e) => (evId === undefined || e.eventId === evId) && e.paid && !personById(e.receivedBy)).forEach((e) => {
-    out.push({ lvl: 'bad', txt: `A inscrição "${entryName(e)}" não tem quem recebeu o dinheiro.` });
-  });
-  if (!C.balanced) out.push({ lvl: 'bad', txt: `As contas não batem: pessoas têm ${eur(C.sumNet)}, mas os fundos esperam ${eur(C.sumPending + C.sumOutstanding)}.` });
+  if (left > EPS) out.push({ cls: 'warn', kind: 'deposit', amount: left, accountId: S.accounts[0]?.id, txt: `Depositar ${eur(left)} nas contas da org` });
   return out;
 }
 
-/* ---------- Relatórios ---------- */
-function padRow(label, val, w = 28) {
+function alertsFor(scope) {
+  const C = compute(scope);
+  const out = [];
+  const t = tourById(scope);
+  if (!S.settings.treasurerId) out.push({ lvl: 'bad', txt: 'Escolhe quem é o tesoureiro em Mais › Tesoureiro.' });
+  if (C.debtN) out.push({ lvl: 'warn', txt: `${C.debtN} jogador(es) em dívida: ${eur(C.debtV)}.` });
+  Object.entries(C.store).forEach(([id, s]) => {
+    const o = r2(s.due - s.paid);
+    if (o > EPS) out.push({ lvl: 'warn', txt: `Falta pagar ${eur(o)} à ${storeById(id)?.name} (devido ${eur(s.due)}${s.debt ? `, dos quais ${eur(s.debt)} de jogadores em dívida` : ''}).` });
+    if (o < -EPS) out.push({ lvl: 'bad', txt: `Pagou-se ${eur(-o)} a mais à ${storeById(id)?.name}.` });
+  });
+  Object.values(C.P).forEach((p) => {
+    if (p.cashLeft < -EPS) out.push({ lvl: 'bad', txt: `${pn(p.id)} usou ${eur(-p.cashLeft)} em numerário a mais do que recebeu. Se foi dinheiro dele(a), indica-o em "do próprio bolso".` });
+    else if (p.own > EPS && p.cashLeft > EPS) out.push({ lvl: 'warn', txt: `${pn(p.id)} pôs ${eur(p.own)} do próprio bolso mas ainda devia ter ${eur(p.cashLeft)} em numerário da org. Confirma.` });
+  });
+  if (t) {
+    const seen = {};
+    S.entries.filter((e) => e.tid === t.id).forEach((e) => {
+      if (seen[e.playerId]) out.push({ lvl: 'bad', txt: `${pn(e.playerId)} está duas vezes no check-in.` });
+      seen[e.playerId] = 1;
+      if (!t.example && t.comps.some((c) => c.monthly && e.amt[c.key] != null)) {
+        const pe = monthlyPaidElsewhere(e.playerId, monthKey(t.date), e.id);
+        if (pe) out.push({ lvl: 'warn', txt: `${pn(e.playerId)} já tinha pago a mensal de ${monthName(monthKey(t.date))}${pe.how === 'excel' ? ' (marcado no Excel)' : ` (em ${pe.t.name})`}.` });
+      }
+      if (!playerById(e.recv)?.org) out.push({ lvl: 'bad', txt: `A inscrição de ${pn(e.playerId)} diz que o dinheiro ficou com alguém que não é organizador.` });
+    });
+    if (t.launched) {
+      const now = excelDeltas(t.id);
+      if (JSON.stringify(now) !== JSON.stringify(t.launched.snap)) out.push({ lvl: 'bad', txt: `Este torneio mudou depois de ser lançado no Excel (${fmtDate(t.launched.date)}). Vê o separador Excel para saberes o que corrigir.` });
+    }
+  }
+  if (!C.balanced) out.push({ lvl: 'bad', txt: `As contas não batem: pessoas têm ${eur(C.sumHeld)}, mas fundos e loja esperam ${eur(C.sumPending + C.storeHeld)}.` });
+  return out;
+}
+
+/* ---------- Excel ---------- */
+/* O que um torneio (ou movimento geral) muda no Excel. */
+function excelDeltas(tid, moveId) {
+  const lines = {}, users = {}, extras = {};
+  const exp = [];
+  const t = tid ? tourById(tid) : null;
+  if (t) {
+    S.entries.filter((e) => e.tid === tid && e.method !== 'debt').forEach((e) => {
+      Object.entries(e.amt).forEach(([k, v]) => {
+        const c = compOf(t, k); if (!c || c.kind !== 'line') return;
+        lines[c.lineId] = r2((lines[c.lineId] || 0) + num(v));
+        if (c.monthly) users[e.playerId] = true;
+        if (c.extra) extras[e.playerId] = r2((extras[e.playerId] || 0) + num(v));
+      });
+    });
+  }
+  S.moves.filter((m) => (moveId ? m.id === moveId : m.tid === tid && tid)).forEach((m) => {
+    if (m.kind === 'receita') lines[m.lineId] = r2((lines[m.lineId] || 0) + r2(m.amount));
+    if (m.kind === 'despesa') exp.push({ desc: m.desc || catById(m.catId)?.name || 'Despesa', date: fmtDate(m.date), catId: m.catId, note: m.note || '', value: r2(m.amount) });
+  });
+  return { lines, exp, users: Object.keys(users).sort(), extras, month: t ? monthKey(t.date) : '' };
+}
+
+function fundDeltaOf(d) {
+  const out = {};
+  Object.entries(d.lines).forEach(([l, v]) => { const f = lineFund(l); out[f] = r2((out[f] || 0) + v); });
+  d.exp.forEach((x) => { const f = catById(x.catId)?.fundId; out[f] = r2((out[f] || 0) - x.value); });
+  return out;
+}
+
+/* Valores que o Excel deve ter agora: base + tudo o que já foi marcado como lançado */
+function excelCurrent() {
+  const lines = {}, funds = {};
+  S.lines.forEach((l) => { lines[l.id] = num(l.value); });
+  S.funds.forEach((f) => { funds[f.id] = num(f.saldo); });
+  const apply = (snap) => {
+    Object.entries(snap.lines).forEach(([l, v]) => { lines[l] = r2((lines[l] || 0) + v); });
+    Object.entries(fundDeltaOf(snap)).forEach(([f, v]) => { funds[f] = r2((funds[f] || 0) + v); });
+  };
+  S.tournaments.filter((t) => t.launched && !t.example).forEach((t) => apply(t.launched.snap));
+  S.moves.filter((m) => !m.tid && m.launched).forEach((m) => apply(m.launched.snap));
+  return { lines, funds };
+}
+
+/* Plano para preencher o Excel: antes → somar → depois */
+function excelPlan(tid, moveId) {
+  const item = tid ? tourById(tid) : S.moves.find((m) => m.id === moveId);
+  const d = tid ? excelDeltas(tid) : excelDeltas(null, moveId);
+  const launched = item?.launched && !item.example;
+  const cur = excelCurrent();
+  const snap = launched ? item.launched.snap : null;
+  const base = (map, key, snapMap) => (launched ? r2((map[key] || 0) - ((snapMap && snapMap[key]) || 0)) : map[key] || 0);
+  const lines = S.lines.filter((l) => d.lines[l.id] || (snap && snap.lines[l.id])).map((l) => {
+    const before = base(cur.lines, l.id, snap?.lines);
+    return { section: l.section, name: l.name, before, delta: d.lines[l.id] || 0, after: r2(before + (d.lines[l.id] || 0)), was: snap ? r2(snap.lines[l.id] || 0) : null, changed: snap ? r2((snap.lines[l.id] || 0)) !== r2(d.lines[l.id] || 0) : false };
+  });
+  const fd = fundDeltaOf(d);
+  const sfd = snap ? fundDeltaOf(snap) : null;
+  const funds = S.funds.map((f) => { const before = base(cur.funds, f.id, sfd); return { name: f.name, before, delta: fd[f.id] || 0, after: r2(before + (fd[f.id] || 0)) }; });
+  const tot = (k) => r2(funds.reduce((s, f) => s + f[k], 0));
+  return {
+    lines, funds, corrente: { before: tot('before'), delta: tot('delta'), after: tot('after') },
+    exp: d.exp.map((x) => ({ ...x, cat: catById(x.catId)?.name || '' })),
+    month: d.month, users: d.users.map(pn), extras: Object.entries(d.extras).map(([p, v]) => ({ name: pn(p), value: v })),
+    launched: !!launched, example: !!item?.example,
+  };
+}
+
+function pendingLaunch() {
+  const out = [];
+  S.tournaments.filter((t) => !t.example && !t.launched).forEach((t) => {
+    const d = excelDeltas(t.id);
+    if (Object.keys(d.lines).length || d.exp.length) out.push({ type: 't', id: t.id, name: t.name, date: t.date });
+  });
+  S.moves.filter((m) => !m.tid && !m.launched && (m.kind === 'receita' || m.kind === 'despesa')).forEach((m) => out.push({ type: 'm', id: m.id, name: m.desc || (m.kind === 'receita' ? 'Receita' : 'Despesa'), date: m.date }));
+  return out.sort((a, b) => a.date.localeCompare(b.date));
+}
+
+function launch(tid, moveId, on) {
+  const item = tid ? tourById(tid) : S.moves.find((m) => m.id === moveId);
+  if (!item) return;
+  item.launched = on ? { date: todayISO(), snap: tid ? excelDeltas(tid) : excelDeltas(null, moveId) } : null;
+}
+
+/* Contas bancárias: Excel vs banco vs dinheiro com pessoas */
+function bankView() {
+  const C = compute('all');
+  const cur = excelCurrent();
+  const pendingAll = {};
+  S.tournaments.filter((t) => !t.example && !t.launched).forEach((t) => Object.entries(fundDeltaOf(excelDeltas(t.id))).forEach(([f, v]) => { pendingAll[f] = r2((pendingAll[f] || 0) + v); }));
+  S.moves.filter((m) => !m.tid && !m.launched).forEach((m) => Object.entries(fundDeltaOf(excelDeltas(null, m.id))).forEach(([f, v]) => { pendingAll[f] = r2((pendingAll[f] || 0) + v); }));
+  return S.accounts.map((a) => {
+    const fs = S.funds.filter((f) => f.accountId === a.id);
+    const excelNow = r2(fs.reduce((s, f) => s + (cur.funds[f.id] || 0), 0));
+    const excelFull = r2(excelNow + fs.reduce((s, f) => s + (pendingAll[f.id] || 0), 0));
+    const ca = C.accs.find((x) => x.id === a.id) || { bank: 0, pending: 0 };
+    const bank = r2(num(a.opening) + ca.bank);
+    const transit = ca.pending;
+    return { id: a.id, name: a.name, funds: fs.map((f) => f.name), excelNow, excelFull, bank, transit, gap: r2(excelFull - bank - transit) };
+  });
+}
+
+/* ---------- Relatório Discord ---------- */
+function padRow(label, val, w = 30) {
   const v = eurPlain(val);
   const l = label.length > w - v.length - 1 ? label.slice(0, w - v.length - 2) + '…' : label;
   return l + ' '.repeat(Math.max(1, w - l.length - v.length)) + v;
 }
 
-function discordReport(evId) {
-  const ev = eventById(evId);
-  const C = compute(evId);
+function discordReport(tid, withPlayers) {
+  const t = tourById(tid);
+  const C = compute(tid);
   const L = [];
-  L.push(`**Breakdown ${ev.name} (${fmtDate(ev.date)})**`);
-  L.push(`${C.count} inscrições pagas` + (C.extraN ? ` · ${C.extraN} contribuições extra` : '') + (C.unpaidN ? ` · ${C.unpaidN} por pagar` : ''));
+  const d = t.date.split('-');
+  L.push(`**Breakdown ${t.name} (${d[2]}/${d[1]}/${d[0].slice(2)})**`);
   L.push('');
-  L.push('```');
-  L.push(' '.repeat(27) + '€');
-  Object.entries(C.recvByMethod).forEach(([m, v]) => L.push(padRow(m, v)));
-  L.push(padRow('Total recebido', C.totalRecv));
-  L.push('─'.repeat(28));
-  Object.values(C.F).filter((x) => x.alloc > EPS).forEach((x) => L.push(padRow(fn(x.id), x.alloc)));
-  L.push('```');
+  L.push(`${C.players} pessoas` + (C.debtN ? ` (${C.debtN} em dívida)` : ''));
+  L.push('');
+  ['mbway', 'num', 'own'].forEach((k) => { if (C.byMethod[k]) L.push(`${k === 'own' ? 'Inscrição própria dos organizadores' : METHOD[k]} - ${eur(C.byMethod[k])}`); });
+  L.push(`Total - ${eur(C.total)}`);
+  if (C.debtV) L.push(`Em dívida - ${eur(C.debtV)}`);
+  L.push('');
+  L.push('Recebido por:');
+  Object.entries(C.recvBy).forEach(([pid, r]) => {
+    const p = C.P[pid];
+    const parts = Object.entries(p.byMethod).map(([k, v]) => `${k === 'own' ? 'própria' : METHOD[k]} ${eur(v)}`).join(' + ');
+    L.push(`• ${pn(pid)}: ${eur(r.v)} (${parts})`);
+    if (r.others.length) L.push(`   pagaram a ${pn(pid)} em vez de ${pn(t.organizerId)}: ${r.others.map((e) => `${pn(e.playerId)} ${eur(entryTotal(e))}`).join(', ')}`);
+  });
+  L.push('');
+  L.push('Dos quais:');
+  Object.entries(C.byComp).filter(([, v]) => v).forEach(([k, v]) => L.push(`• ${k} - ${eur(v)}`));
+  const ms = S.moves.filter((m) => m.tid === tid);
+  if (ms.length) {
+    L.push('');
+    L.push('Movimentos:');
+    ms.forEach((m) => {
+      if (m.kind === 'loja') L.push(`• ${pn(m.by)} pagou ${eur(m.amount)} à ${storeById(m.storeId)?.name}` + ((m.cash || m.own) ? ` (${[m.cash ? `${eur(m.cash)} numerário` : '', r2(m.amount - num(m.cash) - num(m.own)) > EPS ? `${eur(m.amount - num(m.cash) - num(m.own))} MBWAY/transferência` : '', m.own ? `${eur(m.own)} do próprio bolso` : ''].filter(Boolean).join(' + ')})` : ''));
+      else if (m.kind === 'envio') L.push(`• ${pn(m.from)} enviou ${eur(m.amount)} a ${pn(m.to)} por ${m.method}`);
+      else if (m.kind === 'deposito') L.push(`• ${pn(m.by)} depositou ${eur(m.amount)} em ${accById(m.accountId)?.name}`);
+      else if (m.kind === 'despesa') L.push(`• Despesa: ${m.desc || catById(m.catId)?.name} ${eur(m.amount)} paga por ${pn(m.by)}` + (m.own ? ` (${eur(m.own)} do próprio bolso)` : ''));
+      else if (m.kind === 'receita') L.push(`• Receita: ${m.desc || lineById(m.lineId)?.name} ${eur(m.amount)} com ${pn(m.recv)}`);
+      else if (m.kind === 'reembolso') L.push(`• Reembolso de ${eur(m.amount)} a ${pn(m.to)} (${accById(m.accountId)?.name})`);
+    });
+  }
   L.push('');
   L.push('**Acertos**');
-  Object.values(C.P).forEach((p) => {
-    const parts = [];
-    if (p.recvTotal) parts.push(`recebeu ${eur(p.recvTotal)}`);
-    if (p.tin) parts.push(`recebeu ${eur(p.tin)} de outros`);
-    if (p.paid) parts.push(`pagou ${eur(p.paid)}` + (p.own ? ` (${eur(p.own)} do bolso)` : ''));
-    if (p.tout) parts.push(`já enviou ${eur(p.tout)}`);
-    if (p.dep) parts.push(`depositou ${eur(p.dep)}`);
-    const a = actionFor(p.id, p.net);
-    L.push(`• ${pn(p.id)}${p.id === S.settings.treasurerId ? ' (tesoureiro)' : ''}: ${parts.join(' · ')} → ${a.cls === 'ok' ? 'tudo acertado ✅' : a.txt.charAt(0).toLowerCase() + a.txt.slice(1)}`);
-  });
-  const al = alertsFor(evId).filter((a) => a.lvl !== 'info');
-  if (al.length) { L.push(''); L.push('**A confirmar**'); al.forEach((a) => L.push(`• ${a.txt}`)); }
-  return L.join('\n');
-}
-
-/* Linhas para somar no Excel (receitas) e para colar na tabela Despesas */
-function excelLines(filter) {
-  const income = {};
-  S.entries.filter((e) => e.paid && filter(e)).forEach((e) => {
-    entryParts(e).forEach((pt) => {
-      if (isExt(pt.comp.fundId)) return;
-      const ev = eventById(e.eventId);
-      const line = pt.comp.excel || `${ev?.name || ''} · ${pt.comp.label}`;
-      const k = pt.comp.fundId + '|' + line;
-      income[k] ||= { fund: fn(pt.comp.fundId), line, value: 0, hasLine: !!pt.comp.excel };
-      income[k].value = r2(income[k].value + pt.total);
+  const pids = Object.keys(C.P);
+  if (!pids.length) L.push('• Nada registado.');
+  pids.forEach((pid) => L.push(`• ${pn(pid)}: ${actionsFor(C, pid).map((a) => a.cls === 'ok' ? 'tudo acertado ✅' : a.txt.charAt(0).toLowerCase() + a.txt.slice(1)).join('; ')}`));
+  if (withPlayers) {
+    L.push('');
+    L.push('```');
+    const short = { loja: 'L', main: t.comps.find((c) => c.key === 'main')?.label.startsWith('Liga') ? 'Lg' : 'Sm', mensal: 'M', extra: '+' };
+    S.entries.filter((e) => e.tid === tid).forEach((e) => {
+      const name = pn(e.playerId);
+      const comps = t.comps.filter((c) => e.amt[c.key] != null).map((c) => short[c.key] || c.label.slice(0, 2)).join(' ');
+      const nm = name.length > 18 ? name.slice(0, 17) + '…' : name;
+      L.push(`${nm.padEnd(19)}${comps.padEnd(9)}${(METHOD[e.method] === 'Numerário' ? 'Num' : METHOD[e.method] === 'Em dívida' ? 'DÍVIDA' : METHOD[e.method] === 'Próprio' ? 'Próprio' : 'MBWAY').padEnd(8)}${eurPlain(entryTotal(e)).padStart(5)}`);
     });
-  });
-  const expenses = S.moves.filter((m) => m.type === 'pagamento' && !isExt(m.fundId) && filter(m)).map((m) => ({
-    desc: m.desc || 'Despesa', date: fmtDate(m.date), cat: fn(m.fundId), note: m.by === 'org' ? `Pago da conta ${fundById(m.fromFundId || m.fundId)?.account || ''}`.trim() : `Pago por ${pn(m.by)}`, value: moveAmount(m),
-  }));
-  return { income: Object.values(income), expenses };
+    L.push('```');
+    L.push('L loja · Lg liga · Sm semanal · M mensal · + adicional');
+  }
+  return L.join('\n');
 }
 
 /* ---------- CSV / JSON ---------- */
 function csv(rows) {
-  const pt = S.settings.csvPT !== false;
-  const sep = pt ? ';' : ',';
   const cell = (v) => {
-    let s = typeof v === 'number' ? (pt ? eurPlain(v) : r2(v).toFixed(2)) : String(v ?? '');
-    if (s.includes(sep) || s.includes('"') || s.includes('\n')) s = '"' + s.replace(/"/g, '""') + '"';
+    let s = typeof v === 'number' ? eurPlain(v) : String(v ?? '');
+    if (/[;"\n]/.test(s)) s = '"' + s.replace(/"/g, '""') + '"';
     return s;
   };
-  return '﻿' + rows.map((r) => r.map(cell).join(sep)).join('\r\n');
+  return '﻿' + rows.map((r) => r.map(cell).join(';')).join('\r\n');
 }
 
-function csvLancamentos(evId) {
-  const scoped = evId !== undefined;
-  const rows = [['Data', 'Torneio', 'Tipo', 'Pessoa', 'Método', 'Recebido/pago por', 'Fundo', 'Descrição', 'Valor', 'Do próprio bolso']];
-  S.entries.filter((e) => !scoped || e.eventId === evId).forEach((e) => {
-    const ev = eventById(e.eventId);
-    entryParts(e).forEach((pt) => rows.push([fmtDate(ev?.date), ev?.name || '', e.paid ? 'Inscrição' : 'Inscrição (por pagar)', entryName(e) + (e.qty > 1 ? ` ×${e.qty}` : ''), e.method, pn(e.receivedBy), fn(pt.comp.fundId), pt.comp.label, pt.total, 0]));
-  });
-  const tl = { pagamento: 'Pagamento', transferencia: 'Envio entre pessoas', deposito: 'Depósito na conta', reembolso: 'Reembolso' };
-  S.moves.filter((m) => !scoped || m.eventId === evId).forEach((m) => {
-    const ev = eventById(m.eventId);
-    const base = [fmtDate(m.date), ev?.name || 'Geral', tl[m.type]];
-    if (m.type === 'pagamento') rows.push([...base, '', m.method, pn(m.by), fn(m.fundId), m.desc || '', -moveAmount(m), r2(m.own || 0)]);
-    else if (m.type === 'transferencia') rows.push([...base, `${pn(m.from)} → ${pn(m.to)}`, m.method, pn(m.from), '', m.desc || '', moveAmount(m), 0]);
-    else if (m.type === 'deposito') (m.allocs || []).filter((a) => num(a.amount)).forEach((a) => rows.push([...base, pn(m.by), m.method, pn(m.by), fn(a.fundId), m.desc || '', num(a.amount), 0]));
-    else if (m.type === 'reembolso') rows.push([...base, pn(m.to), m.method, 'Conta da org', fn(m.fundId), m.desc || '', -moveAmount(m), 0]);
-  });
+function csvCheckin(tid) {
+  const t = tourById(tid);
+  const rows = [['Jogador', ...t.comps.map((c) => c.label), 'Total', 'Método', 'Recebido por']];
+  S.entries.filter((e) => e.tid === tid).forEach((e) => rows.push([pn(e.playerId), ...t.comps.map((c) => (e.amt[c.key] != null ? num(e.amt[c.key]) : '')), entryTotal(e), METHOD[e.method], pn(e.recv)]));
   return csv(rows);
 }
 
-function csvInscricoes(evId) {
-  const ev = eventById(evId);
-  const rows = [['Jogador', 'Quantidade', ...ev.components.map((c) => c.label), 'Total', 'Método', 'Recebido por', 'Pago']];
-  S.entries.filter((e) => e.eventId === evId).forEach((e) => {
-    rows.push([entryName(e), e.qty || 1, ...ev.components.map((c) => r2(num(e.amounts?.[c.id] || 0) * (e.qty || 1))), entryTotal(e), e.method, pn(e.receivedBy), e.paid ? 'Sim' : 'Não']);
-  });
+function csvExcel(tid, moveId) {
+  const p = excelPlan(tid, moveId);
+  const rows = [['Folha', 'Tabela', 'Linha / jogador', 'Antes', 'Somar', 'Depois', 'Notas']];
+  p.lines.forEach((l) => rows.push(['Budget Geral', l.section, l.name, l.before, l.delta, l.after, '']));
+  p.exp.forEach((x) => rows.push(['Budget Geral', 'Despesas', x.desc, '', -x.value, '', `${x.date} · ${x.cat}${x.note ? ' · ' + x.note : ''}`]));
+  p.funds.filter((f) => f.delta).forEach((f) => rows.push(['Budget Geral', 'Saldo', f.name, f.before, f.delta, f.after, 'confirmar']));
+  p.users.forEach((u) => rows.push(['Users/Estadios', p.month ? monthName(p.month) : '', u, '', '', '', 'marcar ✓']));
+  p.extras.forEach((x) => rows.push(['Users/Estadios', 'Contribuição adicional', x.name, '', x.value, '', 'somar']));
   return csv(rows);
 }
 
-function exportBundle(evId) {
-  if (evId === undefined) return JSON.parse(JSON.stringify(S));
-  const ev = eventById(evId);
-  const entries = S.entries.filter((e) => e.eventId === evId);
-  const moves = S.moves.filter((m) => m.eventId === evId);
-  const pids = new Set([ev.organizerId]);
-  entries.forEach((e) => { pids.add(e.personId); pids.add(e.receivedBy); });
-  moves.forEach((m) => [m.by, m.from, m.to].forEach((x) => pids.add(x)));
-  const fids = new Set(ev.components.map((c) => c.fundId));
-  moves.forEach((m) => { fids.add(m.fundId); fids.add(m.fromFundId); (m.allocs || []).forEach((a) => fids.add(a.fundId)); });
-  return {
-    version: 1, kind: 'torneio',
-    people: S.people.filter((p) => pids.has(p.id)),
-    funds: S.funds.filter((f) => fids.has(f.id)).map((f) => ({ ...f, opening: 0, openingDate: '' })),
-    events: [ev], entries, moves,
-  };
+function exportBundle(tid) {
+  if (!tid) return JSON.parse(JSON.stringify(S));
+  const t = tourById(tid);
+  const entries = S.entries.filter((e) => e.tid === tid);
+  const moves = S.moves.filter((m) => m.tid === tid);
+  const pids = new Set([t.organizerId]);
+  entries.forEach((e) => { pids.add(e.playerId); pids.add(e.recv); });
+  moves.forEach((m) => [m.by, m.from, m.to, m.recv].forEach((x) => x && pids.add(x)));
+  return { version: 2, kind: 'torneio', players: S.players.filter((p) => pids.has(p.id)).map((p) => ({ id: p.id, name: p.name, org: p.org })), tournaments: [{ ...t, launched: null }], entries, moves };
 }
 
-/* Junta dados de outro telemóvel. Pessoas e fundos com o mesmo nome são a mesma. */
+/* Junta dados de outro organizador. Jogadores com o mesmo nome são o mesmo. */
 function importData(data, mode) {
-  if (!data || !Array.isArray(data.events) || !Array.isArray(data.entries) || !Array.isArray(data.moves)) throw new Error('O ficheiro não é um backup da Caixa BBPT.');
-  data.people ||= []; data.funds ||= [];
+  if (!data || !Array.isArray(data.tournaments) || !Array.isArray(data.entries)) throw new Error('O ficheiro não é da Caixa BBPT (versão 2).');
   if (mode === 'replace') {
     const base = emptyState();
-    S = { ...base, ...data, settings: { ...base.settings, ...(data.settings || {}), seeded: false } };
-    return { events: data.events.length, entries: data.entries.length, moves: data.moves.length };
+    S = { ...base, ...data, settings: { ...base.settings, ...(data.settings || {}) } };
+    return { t: data.tournaments.length, e: data.entries.length, m: (data.moves || []).length };
   }
   const norm = (s) => String(s || '').trim().toLowerCase();
-  const pmap = {}, fmap = {};
-  data.people.forEach((p) => {
-    const hit = personById(p.id) || S.people.find((x) => norm(x.name) === norm(p.name));
-    if (hit) pmap[p.id] = hit.id; else { S.people.push({ ...p }); pmap[p.id] = p.id; }
+  const pmap = {};
+  (data.players || []).forEach((p) => {
+    const hit = playerById(p.id) || S.players.find((x) => norm(x.name) === norm(p.name));
+    if (hit) { pmap[p.id] = hit.id; if (p.org) hit.org = true; } else { S.players.push({ id: p.id, name: p.name, org: !!p.org, months: {} }); pmap[p.id] = p.id; }
   });
-  data.funds.forEach((f) => {
-    const hit = fundById(f.id) || S.funds.find((x) => norm(x.name) === norm(f.name));
-    if (hit) fmap[f.id] = hit.id; else { S.funds.push({ ...f }); fmap[f.id] = f.id; }
-  });
-  const mp = (id) => (id && id !== 'org' ? pmap[id] || id : id);
-  const mf = (id) => (id ? fmap[id] || id : id);
+  const mp = (id) => (id && !String(id).startsWith('acc:') ? pmap[id] || id : id);
   const upsert = (arr, item) => { const i = arr.findIndex((x) => x.id === item.id); if (i >= 0) arr[i] = item; else arr.push(item); };
-  data.events.forEach((ev) => upsert(S.events, { ...ev, organizerId: mp(ev.organizerId), components: (ev.components || []).map((c) => ({ ...c, fundId: mf(c.fundId) })) }));
-  data.entries.forEach((e) => upsert(S.entries, { ...e, personId: mp(e.personId), receivedBy: mp(e.receivedBy) }));
-  data.moves.forEach((m) => upsert(S.moves, { ...m, by: mp(m.by), from: mp(m.from), to: mp(m.to), fundId: mf(m.fundId), fromFundId: mf(m.fromFundId), allocs: (m.allocs || []).map((a) => ({ ...a, fundId: mf(a.fundId) })) }));
-  return { events: data.events.length, entries: data.entries.length, moves: data.moves.length };
+  data.tournaments.forEach((t) => {
+    const mine = tourById(t.id);
+    upsert(S.tournaments, { ...t, organizerId: mp(t.organizerId), launched: mine?.launched || null });
+    S.entries = S.entries.filter((e) => e.tid !== t.id);
+    S.moves = S.moves.filter((m) => m.tid !== t.id);
+  });
+  data.entries.forEach((e) => S.entries.push({ ...e, playerId: mp(e.playerId), recv: mp(e.recv) }));
+  (data.moves || []).forEach((m) => upsert(S.moves, { ...m, by: mp(m.by), from: mp(m.from), to: mp(m.to), recv: mp(m.recv) }));
+  return { t: data.tournaments.length, e: data.entries.length, m: (data.moves || []).length };
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { seed, setState, compute, alertsFor, discordReport, excelLines, csvLancamentos, suggestAllocs, actionFor, exportBundle, importData, getState: () => S, emptyState };
+  module.exports = { seed, emptyState, setState, getState: () => S, compute, actionsFor, alertsFor, excelPlan, excelCurrent, pendingLaunch, launch, bankView, discordReport, csvCheckin, csvExcel, exportBundle, importData, defaultAmounts, monthlyPaidElsewhere, addExample };
 }
 
 /* Caixa BBPT — interface */
@@ -656,35 +932,32 @@ if (typeof module !== 'undefined') {
 
 const $ = (s, el = document) => el.querySelector(s);
 const $$ = (s, el = document) => Array.from(el.querySelectorAll(s));
-let UI = { tab: 'resumo', ev: null, evTab: 'inscricoes' };
+let UI = { tab: 'torneios', tid: null, tTab: 'checkin', q: '', pq: '', withPlayers: true };
+let DL = null; // capacidade de downloads quando a app corre dentro do Claude
 
 function load() {
-  try { const raw = localStorage.getItem(KEY); if (raw) return JSON.parse(raw); } catch (e) { /* sem armazenamento */ }
+  try { const raw = localStorage.getItem(KEY); if (raw) { const s = JSON.parse(raw); if (s && s.version === 2) return s; } } catch (e) { /* sem armazenamento */ }
   return seed();
 }
 function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) { /* sem armazenamento */ } }
-function saveUI() { try { localStorage.setItem(KEY + '-ui', JSON.stringify(UI)); } catch (e) { /* */ } }
-function loadUI() { try { const u = JSON.parse(localStorage.getItem(KEY + '-ui') || 'null'); if (u) UI = { ...UI, ...u }; } catch (e) { /* */ } }
+function saveUI() { try { localStorage.setItem(KEY + '-ui', JSON.stringify({ tab: UI.tab, tid: UI.tid, tTab: UI.tTab, withPlayers: UI.withPlayers })); } catch (e) { /* */ } }
+function loadUI() { try { const u = JSON.parse(localStorage.getItem(KEY + '-ui') || 'null'); if (u) Object.assign(UI, u); } catch (e) { /* */ } }
 
-/* ---------- Pequenos componentes ---------- */
+/* ---------- Peças ---------- */
 const opt = (v, label, sel) => `<option value="${esc(v)}"${sel ? ' selected' : ''}>${esc(label)}</option>`;
-const peopleOpts = (sel, extra = '') => extra + S.people.map((p) => opt(p.id, p.name, p.id === sel)).join('');
-const fundOpts = (sel, filter = () => true) => S.funds.filter(filter).map((f) => opt(f.id, f.name + (f.kind === 'externo' ? ' (externo)' : ''), f.id === sel)).join('');
-const methodOpts = (sel) => METHODS.map((m) => opt(m, m, m === sel)).join('');
-const eventOpts = (sel) => opt('', 'Geral (sem torneio)', !sel) + S.events.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).map((e) => opt(e.id, e.name, e.id === sel)).join('');
+const orgOpts = (sel, withAcc) => organizers().map((p) => opt(p.id, p.name, p.id === sel)).join('') + (withAcc ? S.accounts.map((a) => opt('acc:' + a.id, 'Conta ' + a.name, sel === 'acc:' + a.id)).join('') : '');
+const accOpts = (sel) => S.accounts.map((a) => opt(a.id, a.name, a.id === sel)).join('');
+const lineOpts = (sel) => SECTIONS.map((sec) => `<optgroup label="${esc(sec)}">${S.lines.filter((l) => l.section === sec).map((l) => opt(l.id, l.name, l.id === sel)).join('')}</optgroup>`).join('');
+const catOpts = (sel) => S.cats.map((c) => opt(c.id, c.name, c.id === sel)).join('');
+const tourOpts = (sel) => opt('', 'Geral (sem torneio)', !sel) + S.tournaments.map((t) => opt(t.id, t.name, t.id === sel)).join('');
 const chip = (txt, cls = '') => `<span class="chip ${cls}">${esc(txt)}</span>`;
-const money = (v, signed) => `<span class="num${signed ? (v < 0 ? ' neg' : v > 0 ? ' pos' : '') : ''}">${signed && v > 0 ? '+' : signed && v < 0 ? '−' : ''}${eur(signed ? Math.abs(v) : v)}</span>`;
-const ICON = {
-  resumo: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg>',
-  torneios: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15.9V18h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 13H8a4 4 0 0 1-4-4V6h3zm-1 4v1a2 2 0 0 0 1 1.7V8zm11 0v2.7A2 2 0 0 0 18 9V8z"/></svg>',
-  movimentos: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7h11l-3-3 1.4-1.4L21.8 8l-5.4 5.4L15 12l3-3H7zm10 10H6l3 3-1.4 1.4L2.2 16l5.4-5.4L9 12l-3 3h11z"/></svg>',
-  mais: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg>',
-};
+const money = (v, signed) => `<span class="num${signed ? (v < 0 ? ' neg' : v > 0 ? ' pos' : '') : ''}">${signed && v > 0 ? '+' : v < 0 ? '−' : ''}${eur(Math.abs(v))}</span>`;
+const MOVE_LABEL = { loja: 'Pagamento à loja', envio: 'Envio entre organizadores', deposito: 'Depósito na conta', despesa: 'Despesa', receita: 'Receita extra', reembolso: 'Reembolso' };
 
 function toast(msg) {
   const t = $('#toast');
   t.textContent = msg; t.hidden = false;
-  clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 2600);
+  clearTimeout(toast._t); toast._t = setTimeout(() => { t.hidden = true; }, 2800);
 }
 
 async function copyText(text, okMsg = 'Copiado') {
@@ -698,6 +971,10 @@ async function copyText(text, okMsg = 'Copiado') {
 }
 
 async function exportFile(name, content, mime) {
+  if (DL) {
+    try { await DL.save({ filename: name, data: content }); toast(`${name} guardado`); } catch (e) { if (e?.code !== 'declined') toast('Não foi possível guardar. Usa "Copiar".'); }
+    return;
+  }
   const blob = new Blob([content], { type: mime });
   const touch = window.matchMedia && window.matchMedia('(pointer: coarse)').matches;
   if (touch && navigator.canShare) {
@@ -711,12 +988,12 @@ async function exportFile(name, content, mime) {
     a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click();
     setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500);
-    toast(`A descarregar ${name}. Se não começar, usa "Copiar".`);
   } catch (e) { toast('Não foi possível descarregar. Usa "Copiar".'); }
 }
+const slug = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
-/* ---------- Folha (formulário em baixo) ---------- */
-function openSheet({ title, body, submit = 'Guardar', onSubmit, onMount, del }) {
+/* ---------- Folha (formulário por baixo) ---------- */
+function openSheet({ title, body, submit = 'Guardar', onSubmit, onMount, del, delLabel }) {
   const el = $('#sheet');
   el.innerHTML = `<div class="sheet-backdrop" data-act="close-sheet"></div>
   <form class="sheet" id="sheetForm" novalidate role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
@@ -724,7 +1001,7 @@ function openSheet({ title, body, submit = 'Guardar', onSubmit, onMount, del }) 
     <div class="sheet-body">${body}</div>
     <footer class="sheet-foot">
       <p class="form-err" id="formErr" role="alert" hidden></p>
-      <div class="sheet-actions">${del ? '<button type="button" class="btn ghost danger" id="sheetDel">Apagar</button>' : '<span></span>'}<button class="btn primary" type="submit">${esc(submit)}</button></div>
+      <div class="sheet-actions">${del ? `<button type="button" class="btn ghost danger" id="sheetDel">${esc(delLabel || 'Apagar')}</button>` : '<span></span>'}${submit ? `<button class="btn primary" type="submit">${esc(submit)}</button>` : ''}</div>
     </footer>
   </form>`;
   el.hidden = false;
@@ -732,7 +1009,7 @@ function openSheet({ title, body, submit = 'Guardar', onSubmit, onMount, del }) 
   const form = $('#sheetForm');
   form.addEventListener('submit', (e) => {
     e.preventDefault();
-    const err = onSubmit(new FormData(form), form);
+    const err = onSubmit ? onSubmit(new FormData(form), form) : null;
     if (err) { const fe = $('#formErr'); fe.textContent = err; fe.hidden = false; return; }
     closeSheet(); save(); render();
   });
@@ -740,551 +1017,794 @@ function openSheet({ title, body, submit = 'Guardar', onSubmit, onMount, del }) 
     const b = $('#sheetDel');
     b.addEventListener('click', () => {
       if (b.dataset.armed) { del(); closeSheet(); save(); render(); toast('Apagado'); return; }
-      b.dataset.armed = '1'; b.textContent = 'Toca outra vez para apagar';
-      setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = 'Apagar'; } }, 3500);
+      b.dataset.armed = '1'; b.textContent = 'Toca outra vez para confirmar';
+      setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = delLabel || 'Apagar'; } }, 3500);
     });
   }
   if (onMount) onMount(form);
 }
 function closeSheet() { const el = $('#sheet'); el.hidden = true; el.innerHTML = ''; document.body.classList.remove('locked'); }
 
-/* ---------- Ecrã: Resumo ---------- */
-function fundCards(C) {
-  const internal = S.funds.filter((f) => f.kind !== 'externo');
-  if (!internal.length) return `<div class="empty"><p>Ainda não há fundos. Cria a Liga e o fundo de Estádios em <b>Mais › Fundos</b>.</p></div>`;
-  return `<section class="funds">${internal.map((f) => {
-    const x = C.F[f.id] || { earned: 0, bank: 0, pending: 0 };
-    return `<article class="fundcard">
-      <p class="fc-acc">${esc(f.account || 'Sem conta')}</p>
-      <h3>${esc(f.name)}</h3>
-      <p class="fc-big">${eur(x.earned)}</p>
-      <dl class="fc-meta"><div><dt>Deve estar no banco</dt><dd>${eur(x.bank)}</dd></div><div><dt>Com pessoas</dt><dd>${eur(x.pending)}</dd></div></dl>
-    </article>`;
-  }).join('')}</section>`;
-}
-
-function settleRows(C, evId) {
-  const rows = Object.values(C.P).filter((p) => Math.abs(p.net) >= EPS).sort((a, b) => b.net - a.net);
-  if (!rows.length) return `<p class="allgood">✓ Ninguém tem dinheiro da org por entregar.</p>`;
-  return `<ul class="settle">${rows.map((p) => {
-    const a = actionFor(p.id, p.net);
-    const btn = a.kind === 'send' ? `<button class="btn small" data-act="quick-send" data-pid="${p.id}" data-amt="${p.net}" data-ev="${evId || ''}">Registar envio</button>`
-      : a.kind === 'deposit' ? `<button class="btn small" data-act="quick-deposit" data-pid="${p.id}" data-amt="${p.net}" data-ev="${evId || ''}">Registar depósito</button>`
-        : `<button class="btn small" data-act="quick-refund" data-pid="${p.id}" data-amt="${-p.net}" data-ev="${evId || ''}">Registar reembolso</button>`;
-    return `<li class="settle-row ${a.cls}"><div class="settle-who"><b>${esc(pn(p.id))}</b>${p.id === S.settings.treasurerId ? chip('tesoureiro', 'soft') : ''}<span>${esc(a.txt)}</span></div>${btn}</li>`;
-  }).join('')}</ul>`;
-}
-
 function alertList(list) {
   if (!list.length) return '';
   return `<ul class="alerts">${list.map((a) => `<li class="alert ${a.lvl}"><span class="dot" aria-hidden="true"></span><p>${esc(a.txt)}</p></li>`).join('')}</ul>`;
 }
 
+/* ---------- Resumo ---------- */
 function vResumo() {
-  const C = compute();
-  const ext = S.funds.filter((f) => f.kind === 'externo');
+  const cur = excelCurrent();
+  const pend = pendingLaunch();
+  const C = compute('all');
+  const banks = bankView();
+  const people = Object.keys(C.P).filter((pid) => Math.abs(C.P[pid].held) >= EPS);
+  const corrente = r2(S.funds.reduce((s, f) => s + (cur.funds[f.id] || 0), 0));
   return `
-  <header class="top"><div><p class="eyebrow">${esc(S.settings.org || 'BBPT')}</p><h1>Caixa</h1></div><p class="today">${fmtDate(todayISO())}</p></header>
-  ${S.settings.seeded ? `<p class="banner">Estás a ver os dados da Semana 5 da Liga Fénix Negra S2. Podes editá-los ou começar do zero em <b>Mais › Dados</b>.</p>` : ''}
-  ${fundCards(C)}
-  <section class="block"><h2>Acertos por fazer</h2>${settleRows(C)}</section>
-  ${alertList(alertsFor()) ? `<section class="block"><h2>A confirmar</h2>${alertList(alertsFor())}</section>` : ''}
-  ${ext.length ? `<section class="block"><h2>Pagamentos externos</h2><ul class="kv">${ext.map((f) => { const x = C.F[f.id] || { due: 0, paid: 0, outstanding: 0 }; return `<li><span>${esc(f.name)}</span><span>${eur(x.paid)} de ${eur(x.due)} ${Math.abs(x.outstanding) < EPS ? chip('pago', 'ok') : chip(x.outstanding > 0 ? `faltam ${eur(x.outstanding)}` : 'pago a mais', x.outstanding > 0 ? 'warn' : 'bad')}</span></li>`; }).join('')}</ul></section>` : ''}
-  <section class="block verify ${C.balanced ? 'ok' : 'bad'}">
-    <h2>Verificação</h2>
-    <p>Dinheiro da org com pessoas: <b>${eur(C.sumNet)}</b><br>Em trânsito para os fundos + externos por pagar: <b>${eur(C.sumPending + C.sumOutstanding)}</b></p>
-    <p class="verdict">${C.balanced ? '✓ As contas batem certo.' : '✗ Há uma diferença. Revê os movimentos.'}</p>
+  <header class="top"><div><p class="eyebrow">Finanças Beyblade PT · Lisboa</p><h1>Caixa</h1></div><p class="today">${fmtDate(todayISO())}</p></header>
+  <section class="block"><h2>Saldos no Excel</h2>
+    <div class="funds">${S.funds.map((f) => `<article class="fundcard"><p class="fc-acc">${esc(accById(f.accountId)?.name || '')}</p><h3>${esc(f.name)}</h3><p class="fc-big">${eur(cur.funds[f.id] || 0)}</p></article>`).join('')}
+    <article class="fundcard total"><p class="fc-acc">Excel</p><h3>Saldo Corrente</h3><p class="fc-big">${eur(corrente)}</p></article></div>
+    <p class="hint">É o que o Excel deve mostrar depois de lançares tudo o que está marcado como lançado.</p>
+  </section>
+  <section class="block"><h2>Por lançar no Excel</h2>
+    ${pend.length ? `<ul class="kv">${pend.map((x) => `<li><button type="button" class="linkrow" data-act="${x.type === 't' ? 'open-excel' : 'edit-move'}" data-id="${x.id}"><span>${esc(x.name)} <small class="muted">${fmtDate(x.date)}</small></span><span>${chip('por lançar', 'warn')}</span></button></li>`).join('')}</ul>` : '<p class="allgood">✓ Não há nada por lançar.</p>'}
+  </section>
+  <section class="block"><h2>Acertos por fazer</h2>
+    ${people.length ? `<ul class="settle">${people.map((pid) => settleRow(C, pid, '')).join('')}</ul>` : '<p class="allgood">✓ Ninguém tem dinheiro da org por entregar.</p>'}
+  </section>
+  <section class="block"><h2>Contas bancárias</h2>
+    <div class="bankcards">${banks.map((b) => `<article class="bankcard"><header><h3>${esc(b.name)}</h3><small class="muted">${esc(b.funds.join(' + '))}</small></header>
+      <dl><div><dt>Banco (esperado)</dt><dd>${eur(b.bank)}</dd></div><div><dt>Com pessoas</dt><dd>${eur(b.transit)}</dd></div><div><dt>Excel</dt><dd>${eur(b.excelFull)}</dd></div><div><dt>Por explicar</dt><dd>${Math.abs(b.gap) < EPS ? '<span class="pos">✓ nada</span>' : `<span class="neg">${eur(b.gap)}</span>`}</dd></div></dl></article>`).join('')}</div>
+    <p class="hint">Banco + dinheiro com pessoas deve dar o Excel. Se sobrar valor "por explicar", há dinheiro que não foi registado na app (ou um erro no Excel). Atualiza o saldo real do banco em Mais › Excel e contas.</p>
   </section>`;
 }
 
-/* ---------- Ecrã: Torneios ---------- */
-function vEvents() {
-  const evs = S.events.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  return `
-  <header class="top"><div><p class="eyebrow">Torneios</p><h1>Eventos</h1></div><button class="btn primary" data-act="new-event">Novo torneio</button></header>
-  ${evs.length ? `<ul class="cards">${evs.map((ev) => {
-    const C = compute(ev.id);
-    const open = Object.values(C.P).filter((p) => Math.abs(p.net) >= EPS && p.id !== S.settings.treasurerId).reduce((s, p) => s + p.net, 0);
-    const al = alertsFor(ev.id).filter((a) => a.lvl === 'bad' || a.lvl === 'warn').length;
-    return `<li><button class="evcard" data-act="open-event" data-id="${ev.id}">
-      <span class="ev-date">${fmtDate(ev.date)}</span>
-      <span class="ev-name">${esc(ev.name)}</span>
-      <span class="ev-meta">${C.count} inscrições · ${eur(C.totalRecv)} recebidos</span>
-      <span class="ev-state">${Math.abs(open) >= EPS ? chip(open > 0 ? `${eur(open)} por entregar` : `org deve ${eur(-open)}`, open > 0 ? 'warn' : 'bad') : chip('acertado', 'ok')}${al ? chip(`${al} a confirmar`, 'soft') : ''}</span>
-    </button></li>`;
-  }).join('')}</ul>` : `<div class="empty"><p>Ainda não há torneios.</p><p>Cria o primeiro e define quanto de cada inscrição vai para a loja, para a liga e para os estádios.</p></div>`}`;
+function settleRow(C, pid, tid) {
+  const acts = actionsFor(C, pid);
+  return `<li class="settle-row ${acts[0].cls}"><div class="settle-who"><b>${esc(pn(pid))}</b>${pid === S.settings.treasurerId ? chip('tesoureiro', 'soft') : ''}</div>
+    <div class="settle-acts">${acts.map((a) => `<div class="settle-act"><span>${esc(a.txt)}</span>${a.kind ? `<button type="button" class="btn small" data-act="quick" data-kind="${a.kind}" data-pid="${pid}" data-amt="${a.amount}" data-acc="${a.accountId || ''}" data-store="${a.storeId || ''}" data-tid="${tid || ''}">Registar</button>` : ''}</div>`).join('')}</div></li>`;
 }
 
-function vEvent() {
-  const ev = eventById(UI.ev);
-  if (!ev) { UI.ev = null; return vEvents(); }
-  const C = compute(ev.id);
-  const tabs = [['inscricoes', 'Inscrições'], ['movimentos', 'Movimentos'], ['acertos', 'Acertos'], ['relatorio', 'Relatório']];
-  let body = '';
-  if (UI.evTab === 'inscricoes') body = vEntries(ev);
-  else if (UI.evTab === 'movimentos') body = vEventMoves(ev);
-  else if (UI.evTab === 'acertos') body = vSettle(ev, C);
-  else body = vReport(ev);
+/* ---------- Torneios ---------- */
+function tourStatus(t) {
+  if (t.example) return chip('exemplo', 'soft');
+  const changed = alertsFor(t.id).some((a) => a.txt.startsWith('Este torneio mudou'));
+  if (changed) return chip('alterado depois de lançado', 'bad');
+  return t.launched ? chip('lançado no Excel', 'ok') : chip('por lançar', 'warn');
+}
+
+function vTours() {
+  const ts = S.tournaments.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
+  return `
+  <header class="top"><div><p class="eyebrow">Check-in e contas</p><h1>Torneios</h1></div><button type="button" class="btn primary" data-act="new-tour">Novo torneio</button></header>
+  ${ts.length ? `<ul class="cards">${ts.map((t) => {
+    const C = compute(t.id);
+    const open = Object.keys(C.P).some((pid) => Math.abs(C.P[pid].held) >= EPS && pid !== S.settings.treasurerId);
+    return `<li><button type="button" class="evcard" data-act="open-tour" data-id="${t.id}">
+      <span class="ev-date">${fmtDate(t.date)} · ${esc(typeById(t.typeId)?.name || '')}</span>
+      <span class="ev-name">${esc(t.name)}</span>
+      <span class="ev-meta">${C.players} jogadores · ${eur(C.total)} recebidos${C.debtN ? ` · ${C.debtN} em dívida` : ''}</span>
+      <span class="ev-state">${tourStatus(t)}${open ? chip('dinheiro por entregar', 'warn') : ''}</span>
+    </button></li>`;
+  }).join('')}</ul>` : `<div class="empty"><p>Ainda não há torneios. Cria o primeiro e começa o check-in.</p></div>`}`;
+}
+
+function vTour() {
+  const t = tourById(UI.tid);
+  if (!t) { UI.tid = null; return vTours(); }
+  const C = compute(t.id);
+  const tabs = [['checkin', 'Check-in'], ['pagamentos', 'Pagamentos'], ['acertos', 'Acertos'], ['excel', 'Excel'], ['relatorio', 'Relatório']];
+  const body = { checkin: vCheckin, pagamentos: vPayments, acertos: vSettle, excel: vExcel, relatorio: vReport }[UI.tTab] || vCheckin;
   return `
   <header class="top ev-top">
-    <button class="link back" data-act="back">‹ Torneios</button>
-    <div class="ev-title"><p class="eyebrow">${fmtDate(ev.date)}${ev.organizerId ? ' · organizado por ' + esc(pn(ev.organizerId)) : ''}</p><h1>${esc(ev.name)}</h1></div>
-    <div class="ev-tools"><button class="btn small ghost" data-act="edit-event" data-id="${ev.id}">Editar</button><button class="btn small ghost" data-act="dup-event" data-id="${ev.id}">Duplicar</button></div>
+    <button type="button" class="link back" data-act="back">‹ Torneios</button>
+    <div class="ev-title"><p class="eyebrow">${fmtDate(t.date)} · ${esc(typeById(t.typeId)?.name || 'Torneio')} · organiza ${esc(pn(t.organizerId))}</p><h1>${esc(t.name)}</h1></div>
+    <div class="ev-tools">${tourStatus(t)}<button type="button" class="btn small ghost" data-act="edit-tour" data-id="${t.id}">Editar</button></div>
   </header>
+  ${t.example ? `<p class="banner">${esc(t.notes)}</p>` : ''}
   <section class="stats">
-    <div><span>Inscrições</span><b>${C.count}${C.extraN ? `<small> +${C.extraN}</small>` : ''}</b></div>
-    ${Object.entries(C.recvByMethod).map(([m, v]) => `<div><span>${esc(m)}</span><b>${eur(v)}</b></div>`).join('')}
-    <div><span>Total</span><b>${eur(C.totalRecv)}</b></div>
+    <div><span>Jogadores</span><b>${C.players}</b></div>
+    <div><span>MBWAY</span><b>${eur(C.byMethod.mbway || 0)}</b></div>
+    <div><span>Numerário</span><b>${eur(C.byMethod.num || 0)}</b></div>
+    ${C.byMethod.own ? `<div><span>Próprio</span><b>${eur(C.byMethod.own)}</b></div>` : ''}
+    ${C.debtV ? `<div class="debt"><span>Em dívida</span><b>${eur(C.debtV)}</b></div>` : ''}
+    <div><span>Total</span><b>${eur(C.total)}</b></div>
   </section>
-  <nav class="seg" aria-label="Secções do torneio">${tabs.map(([k, l]) => `<button data-act="ev-tab" data-tab="${k}" aria-pressed="${UI.evTab === k}">${l}</button>`).join('')}</nav>
-  ${body}`;
+  <p class="compline">${Object.entries(C.byComp).filter(([, v]) => v).map(([k, v]) => `<span>${esc(k)} <b>${eur(v)}</b></span>`).join('') || '<span class="muted">Ainda sem valores.</span>'}</p>
+  <nav class="seg" aria-label="Secções do torneio">${tabs.map(([k, l]) => `<button data-act="t-tab" data-tab="${k}" aria-pressed="${UI.tTab === k}">${l}</button>`).join('')}</nav>
+  ${body(t, C)}`;
 }
 
-function vEntries(ev) {
-  const list = S.entries.filter((e) => e.eventId === ev.id);
+/* --- Check-in --- */
+function ciResults(t) {
+  const inIds = new Set(S.entries.filter((e) => e.tid === t.id).map((e) => e.playerId));
+  const q = UI.q.trim().toLowerCase();
+  if (!q) return '';
+  const hits = S.players.filter((p) => !inIds.has(p.id) && p.name.toLowerCase().includes(q)).slice(0, 8);
+  const exact = S.players.some((p) => p.name.toLowerCase() === q);
+  const already = S.players.filter((p) => inIds.has(p.id) && p.name.toLowerCase().includes(q));
+  return `<ul class="results">${hits.map((p) => `<li><button type="button" class="result" data-act="ci-add" data-id="${p.id}">${esc(p.name)}${p.org ? ' ' + chip('organizador', 'soft') : ''}</button></li>`).join('')}
+    ${exact ? '' : `<li><button type="button" class="result new" data-act="ci-new">+ Novo jogador «${esc(UI.q.trim())}»</button></li>`}</ul>
+    ${already.length ? `<p class="hint">Já no check-in: ${already.map((p) => esc(p.name)).join(', ')}</p>` : ''}`;
+}
+
+function vCheckin(t) {
+  const entries = S.entries.filter((e) => e.tid === t.id);
+  const nm = S.settings.newMethod || 'mbway';
   return `
-  <div class="bar"><button class="btn primary" data-act="new-entry">Adicionar inscrição</button></div>
-  ${ev.notes ? `<p class="note">${esc(ev.notes)}</p>` : ''}
-  ${list.length ? `<ul class="rows">${list.map((e) => `<li><button class="row" data-act="edit-entry" data-id="${e.id}">
-    <span class="row-main"><b>${esc(entryName(e))}${e.qty > 1 ? ` <small>×${e.qty}</small>` : ''}</b><span class="muted">${entryParts(e).map((p) => `${esc(p.comp.label)} ${eur(p.unit)}`).join(' · ')}</span></span>
-    <span class="row-side">${money(entryTotal(e))}<span class="row-tags">${chip(e.method, e.method === PHYS ? 'cash' : 'soft')}${e.paid ? '' : chip('por pagar', 'warn')}</span><span class="muted small">com ${esc(pn(e.receivedBy))}</span></span>
-  </button></li>`).join('')}</ul>` : `<div class="empty"><p>Sem inscrições. Adiciona jogadores um a um, ou em lote (ex.: "11 jogadores em físico").</p></div>`}`;
-}
-
-const MOVE_LABEL = { pagamento: 'Pagamento', transferencia: 'Envio', deposito: 'Depósito', reembolso: 'Reembolso' };
-function moveSummary(m) {
-  if (m.type === 'pagamento') return `${pn(m.by)} → ${fn(m.fundId)}` + (m.own ? ` · ${eur(m.own)} do bolso` : '');
-  if (m.type === 'transferencia') return `${pn(m.from)} → ${pn(m.to)}`;
-  if (m.type === 'deposito') return `${pn(m.by)} → ` + (m.allocs || []).filter((a) => num(a.amount)).map((a) => `${fn(a.fundId)} ${eur(a.amount)}`).join(' · ');
-  return `${fundById(m.fundId)?.account || fn(m.fundId)} → ${pn(m.to)}`;
-}
-function moveRows(list) {
-  if (!list.length) return `<div class="empty"><p>Sem movimentos.</p></div>`;
-  return `<ul class="rows">${list.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).map((m) => `<li><button class="row" data-act="edit-move" data-id="${m.id}">
-    <span class="row-main"><span class="row-kicker">${MOVE_LABEL[m.type]} · ${fmtDate(m.date)}${m.eventId === null && UI.tab === 'movimentos' ? '' : ''}</span><b>${esc(m.desc || moveSummary(m))}</b><span class="muted">${esc(moveSummary(m))}${UI.tab === 'movimentos' ? ' · ' + esc(eventById(m.eventId)?.name || 'Geral') : ''}</span></span>
-    <span class="row-side">${money(moveAmount(m))}<span class="row-tags">${chip(m.method, m.method === PHYS ? 'cash' : 'soft')}</span></span>
-  </button></li>`).join('')}</ul>`;
-}
-const moveButtons = (evId) => `<div class="bar wrap">
-  <button class="btn" data-act="new-move" data-type="pagamento" data-ev="${evId || ''}">Pagamento</button>
-  <button class="btn" data-act="new-move" data-type="transferencia" data-ev="${evId || ''}">Envio entre pessoas</button>
-  <button class="btn" data-act="new-move" data-type="deposito" data-ev="${evId || ''}">Depósito na conta</button>
-  <button class="btn" data-act="new-move" data-type="reembolso" data-ev="${evId || ''}">Reembolso</button></div>`;
-
-function vEventMoves(ev) {
-  return `${moveButtons(ev.id)}<p class="hint">Pagamento: alguém pagou a loja ou uma despesa (indica se pôs dinheiro do bolso). Envio: alguém passou dinheiro a outro organizador. Depósito: dinheiro entrou nas contas da org.</p>${moveRows(S.moves.filter((m) => m.eventId === ev.id))}`;
-}
-
-function personBreakdown(p) {
-  const a = actionFor(p.id, p.net);
-  return `<article class="pcard ${a.cls}">
-    <header><h3>${esc(pn(p.id))}</h3>${p.id === S.settings.treasurerId ? chip('tesoureiro', 'soft') : ''}</header>
-    <table class="calc"><tbody>
-      ${p.lines.map((l) => `<tr><td>${esc(l.t)}</td><td>${money(l.v, true)}</td></tr>`).join('')}
-    </tbody><tfoot><tr><td>${Math.abs(p.net) < EPS ? 'Saldo' : p.net > 0 ? 'Por entregar' : 'A org deve'}</td><td>${money(Math.abs(p.net))}</td></tr></tfoot></table>
-    <p class="pcard-act">${esc(a.txt)}</p>
-    ${p.physIn || p.physOut ? `<p class="muted small">Físico: recebeu ${eur(p.physIn)}, usou ${eur(p.physOut)} da org → ${p.physLeft >= 0 ? `devia ter ${eur(p.physLeft)} na mão` : `faltam ${eur(-p.physLeft)}`}.</p>` : ''}
-  </article>`;
-}
-
-function vSettle(ev, C) {
-  const funds = Object.values(C.F).filter((x) => x.alloc > EPS || x.paidExt > EPS || x.exp > EPS || x.dep > EPS);
-  return `
-  ${alertList(alertsFor(ev.id))}
-  <section class="block"><h2>Por pessoa</h2><div class="pgrid">${Object.values(C.P).map(personBreakdown).join('') || '<p class="muted">Sem dinheiro registado.</p>'}</div></section>
-  <section class="block"><h2>Para onde vai o dinheiro</h2>
-    <div class="tablewrap"><table class="data"><thead><tr><th>Fundo</th><th>Recebido</th><th>Pago / despesas</th><th>Depositado</th><th>Falta</th></tr></thead><tbody>
-    ${funds.map((x) => x.kind === 'externo'
-      ? `<tr><td>${esc(fn(x.id))} <small class="muted">externo</small></td><td>${eur(x.due)}</td><td>${eur(x.paid)}</td><td>—</td><td>${Math.abs(x.outstanding) < EPS ? '✓' : eur(x.outstanding)}</td></tr>`
-      : `<tr><td>${esc(fn(x.id))}</td><td>${eur(x.alloc)}</td><td>${eur(x.exp)}</td><td>${eur(x.dep)}</td><td>${Math.abs(x.pending) < EPS ? '✓' : eur(x.pending)}</td></tr>`).join('')}
-    </tbody></table></div>
-  </section>`;
-}
-
-function excelBlock(L, title) {
-  const incTSV = L.income.map((i) => [i.line, eurPlain(i.value)].join('\t')).join('\n');
-  const expTSV = L.expenses.map((x) => [x.desc, x.date, x.cat, x.note, eurPlain(x.value)].join('\t')).join('\n');
-  return `<section class="block"><h2>${title}</h2>
-    <h3 class="sub">Somar às receitas</h3>
-    ${L.income.length ? `<ul class="kv">${L.income.map((i) => `<li><span>${esc(i.line)}<small class="muted"> · ${esc(i.fund)}${i.hasLine ? '' : ' · sem linha do Excel definida'}</small></span><span>${money(i.value, true)}</span></li>`).join('')}</ul>
-    <button class="btn small" data-act="copy" data-text="${esc(incTSV)}">Copiar receitas</button>` : '<p class="muted">Sem receitas.</p>'}
-    <h3 class="sub">Colar na tabela Despesas</h3>
-    ${L.expenses.length ? `<div class="tablewrap"><table class="data"><thead><tr><th>Descrição</th><th>Data</th><th>Categoria</th><th>Nota</th><th>Valor</th></tr></thead><tbody>${L.expenses.map((x) => `<tr><td>${esc(x.desc)}</td><td>${esc(x.date)}</td><td>${esc(x.cat)}</td><td>${esc(x.note)}</td><td>${eur(x.value)}</td></tr>`).join('')}</tbody></table></div>
-    <button class="btn small" data-act="copy" data-text="${esc(expTSV)}">Copiar despesas</button>` : '<p class="muted">Sem despesas.</p>'}
-    <p class="hint">Copia e cola diretamente nas células do Google Sheets ou Excel: as colunas ficam separadas.</p>
-  </section>`;
-}
-
-function vReport(ev) {
-  const txt = discordReport(ev.id);
-  return `
-  <section class="block"><h2>Mensagem para o Discord</h2>
-    <pre class="report" id="reportText">${esc(txt)}</pre>
-    <div class="bar wrap"><button class="btn primary" data-act="copy" data-text="${esc(txt)}">Copiar mensagem</button></div>
-  </section>
-  ${excelBlock(excelLines((x) => x.eventId === ev.id), 'Para o Excel')}
-  <section class="block"><h2>Exportar</h2>
-    <div class="bar wrap">
-      <button class="btn" data-act="export-csv-ins" data-id="${ev.id}">CSV de inscrições</button>
-      <button class="btn" data-act="export-csv-ev" data-id="${ev.id}">CSV de lançamentos</button>
-      <button class="btn" data-act="export-json-ev" data-id="${ev.id}">Enviar torneio a outro organizador</button>
+  <section class="addbox">
+    <label class="field" for="ciSearch">Adicionar jogador</label>
+    <input id="ciSearch" type="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Escreve o nome…" value="${esc(UI.q)}">
+    <div class="newmethod"><span class="muted small">Entra como</span>
+      <div class="mini-seg">${['mbway', 'num', 'debt'].map((k) => `<button type="button" data-act="new-method" data-m="${k}" aria-pressed="${nm === k}">${METHOD[k]}</button>`).join('')}</div>
     </div>
-    <p class="hint">"Enviar torneio" cria um ficheiro que o outro organizador importa em Mais › Dados. Pessoas e fundos com o mesmo nome juntam-se automaticamente.</p>
-  </section>`;
+    <div id="ciResults">${ciResults(t)}</div>
+  </section>
+  ${entries.length ? `<ul class="ci-list">${entries.slice().reverse().map((e) => ciRow(t, e)).join('')}</ul>` : '<div class="empty"><p>Ninguém no check-in. Procura o primeiro jogador acima.</p><p>Cada jogador entra com a loja e a liga marcadas. A mensal de estádios só vem marcada se ainda não pagou este mês.</p></div>'}`;
 }
 
-/* ---------- Ecrã: Movimentos ---------- */
-function vMoves() {
-  return `<header class="top"><div><p class="eyebrow">Todos os torneios</p><h1>Movimentos</h1></div></header>
-  ${moveButtons('')}
-  <p class="hint">Aqui ficam também as despesas gerais pagas pelas contas da org, como estádios ou danos.</p>
-  ${moveRows(S.moves)}`;
+function ciRow(t, e) {
+  const pl = playerById(e.playerId);
+  const month = monthKey(t.date);
+  const comps = t.comps.map((c) => {
+    const on = e.amt[c.key] != null;
+    let label = `${c.label} ${eurPlain(on ? e.amt[c.key] : c.price).replace(',00', '')}€`;
+    let cls = '';
+    if (c.monthly && !t.example) {
+      const pe = monthlyPaidElsewhere(e.playerId, month, e.id);
+      if (pe && !on) { label = `Mensal ✓ ${monthName(month).slice(0, 3)}`; cls = 'paid'; }
+      if (pe && on) cls = 'dup';
+    }
+    return `<button type="button" class="tog ${cls}" data-act="tog" data-id="${e.id}" data-key="${c.key}" aria-pressed="${on}">${esc(label)}</button>`;
+  }).join('');
+  const methods = ['mbway', 'num'].concat(pl?.org ? ['own'] : []).concat(['debt']);
+  const other = e.method !== 'own' && e.recv !== t.organizerId;
+  return `<li class="ci ${e.method === 'debt' ? 'is-debt' : ''}">
+    <div class="ci-head"><span class="ci-name">${esc(pn(e.playerId))}</span>${other ? chip('pagou a ' + pn(e.recv), 'warn') : ''}<span class="ci-total">${eur(entryTotal(e))}</span><button type="button" class="icon-btn sm" data-act="ci-more" data-id="${e.id}" aria-label="Mais opções de ${esc(pn(e.playerId))}">⋯</button></div>
+    <div class="ci-comps">${comps}</div>
+    <div class="mini-seg ci-pay" role="group" aria-label="Como pagou">${methods.map((k) => `<button type="button" data-act="set-method" data-id="${e.id}" data-m="${k}" aria-pressed="${e.method === k}" class="m-${k}">${METHOD[k]}</button>`).join('')}</div>
+  </li>`;
 }
 
-/* ---------- Ecrã: Mais ---------- */
-function vMais() {
-  const C = compute();
-  const since = UI.since || '';
-  const flt = (x) => { if (!since) return true; const d = x.date || eventById(x.eventId)?.date || ''; return d >= since; };
-  return `<header class="top"><div><p class="eyebrow">Definições</p><h1>Mais</h1></div></header>
-  <section class="block"><h2>Pessoas</h2>
-    <label class="field">Tesoureiro (dono das contas da org)<select id="treasurer" data-act="set-treasurer">${opt('', '— escolher —', !S.settings.treasurerId)}${peopleOpts(S.settings.treasurerId)}</select></label>
-    <ul class="kv">${S.people.map((p) => `<li><button class="linkrow" data-act="edit-person" data-id="${p.id}"><span>${esc(p.name)} ${p.organizer ? chip('organizador', 'soft') : ''}</span><span>${C.P[p.id] && Math.abs(C.P[p.id].net) >= EPS ? money(C.P[p.id].net, true) : '<span class="muted">—</span>'}</span></button></li>`).join('')}</ul>
-    <button class="btn small" data-act="new-person">Adicionar pessoa</button>
-  </section>
-  <section class="block"><h2>Fundos</h2>
-    <p class="hint">Internos ficam na org (Liga, Estádios). Externos são pagos a terceiros (Loja). O saldo inicial é o que estava no banco antes do primeiro torneio registado.</p>
-    <ul class="kv">${S.funds.map((f) => `<li><button class="linkrow" data-act="edit-fund" data-id="${f.id}"><span>${esc(f.name)} <small class="muted">${f.kind === 'externo' ? 'externo' : esc(f.account || '')}</small></span><span>${f.kind === 'externo' ? '' : 'início ' + eur(f.opening || 0)}</span></button></li>`).join('')}</ul>
-    <button class="btn small" data-act="new-fund">Adicionar fundo</button>
-  </section>
-  <section class="block"><h2>Excel</h2>
-    <label class="field">Lançamentos desde<input type="date" id="since" value="${esc(since)}" data-act="set-since"></label>
-    <ul class="kv">${S.funds.filter((f) => f.kind !== 'externo').map((f) => `<li><span>Saldo esperado ${esc(f.name)}</span><b>${eur(C.F[f.id]?.earned || 0)}</b></li>`).join('')}</ul>
-  </section>
-  ${excelBlock(excelLines(flt), since ? `Desde ${fmtDate(since)}` : 'Tudo')}
-  <section class="block"><h2>Dados</h2>
-    <p class="hint">Os dados ficam só neste telemóvel. Faz uma cópia de segurança de vez em quando e envia torneios a outros organizadores por ficheiro.</p>
-    <div class="bar wrap">
-      <button class="btn" data-act="export-json">Cópia de segurança (JSON)</button>
-      <button class="btn" data-act="copy-json">Copiar cópia de segurança</button>
-      <button class="btn" data-act="export-csv-all">CSV de todos os lançamentos</button>
-    </div>
-    <label class="check"><input type="checkbox" id="csvPT" data-act="toggle-csv" ${S.settings.csvPT !== false ? 'checked' : ''}> CSV em formato português (; e vírgula decimal)</label>
-    <h3 class="sub">Importar</h3>
-    <label class="field">Ficheiro (.json)<input type="file" id="importFile" accept=".json,application/json"></label>
-    <label class="field">ou cola o conteúdo<textarea id="importText" rows="3" placeholder='{"version":1,…}'></textarea></label>
-    <div class="bar wrap"><button class="btn primary" data-act="import" data-mode="merge">Juntar aos meus dados</button><button class="btn ghost danger" data-act="import" data-mode="replace">Substituir tudo</button></div>
-    <h3 class="sub">Recomeçar</h3>
-    <div class="bar wrap"><button class="btn ghost danger" data-act="reset" data-mode="empty">Apagar tudo</button><button class="btn ghost" data-act="reset" data-mode="seed">Repor dados da Semana 5</button></div>
-  </section>
-  <section class="block"><h2>Instalar no telemóvel</h2>
-    <p><b>iPhone:</b> abre no Safari › botão Partilhar › Adicionar ao ecrã principal.<br><b>Android:</b> abre no Chrome › menu ⋮ › Instalar app.</p>
-    <button class="btn" id="installBtn" data-act="install" hidden>Instalar agora</button>
-  </section>`;
+function addEntry(t, playerId) {
+  const m = S.settings.newMethod || 'mbway';
+  S.entries.push({ id: uid('n'), tid: t.id, playerId, amt: defaultAmounts(t, playerId), method: m, recv: t.organizerId || S.settings.treasurerId });
+  UI.q = '';
+  save(); render(); focusSearch();
 }
+function focusSearch() { const i = $('#ciSearch'); if (i) { i.focus(); } }
 
-/* ---------- Formulários ---------- */
-function entryForm(ev, entry) {
-  const tr = S.settings.treasurerId;
-  const e = entry || { personId: '', label: '', qty: 1, amounts: Object.fromEntries(ev.components.filter((c) => c.def !== false).map((c) => [c.id, c.price])), method: 'MBWAY', receivedBy: ev.organizerId || tr, paid: true };
+function entrySheet(e) {
+  const t = tourById(e.tid);
   openSheet({
-    title: entry ? 'Editar inscrição' : 'Nova inscrição',
-    del: entry ? () => { S.entries = S.entries.filter((x) => x.id !== entry.id); } : null,
+    title: pn(e.playerId),
+    del: () => { S.entries = S.entries.filter((x) => x.id !== e.id); },
+    delLabel: 'Tirar do check-in',
     body: `
-      <label class="field">Jogador<select name="personId">${opt('', '— Sem nome / lote —', !e.personId)}${peopleOpts(e.personId)}</select></label>
-      <div class="row2"><label class="field" id="lblWrap">Descrição do lote<input name="label" value="${esc(e.label)}" placeholder="ex.: Jogadores em físico"></label>
-      <label class="field">Quantidade<input name="qty" inputmode="numeric" value="${e.qty || 1}"></label></div>
-      <fieldset class="comps"><legend>O que pagou (valor por pessoa)</legend>
-        ${ev.components.map((c) => `<div class="comp-row"><label class="check"><input type="checkbox" name="on_${c.id}" ${e.amounts[c.id] != null ? 'checked' : ''}> <span>${esc(c.label)} <small class="muted">→ ${esc(fn(c.fundId))}</small></span></label><input name="amt_${c.id}" inputmode="decimal" value="${esc(eurPlain(e.amounts[c.id] ?? c.price))}" aria-label="Valor ${esc(c.label)}"></div>`).join('')}
+      <fieldset class="comps"><legend>Valores</legend>
+        ${t.comps.map((c) => `<div class="comp-row"><label class="check"><input type="checkbox" name="on_${c.key}" ${e.amt[c.key] != null ? 'checked' : ''}> <span>${esc(c.label)}</span></label><input name="v_${c.key}" inputmode="decimal" value="${esc(eurPlain(e.amt[c.key] ?? c.price))}" aria-label="Valor de ${esc(c.label)}"></div>`).join('')}
       </fieldset>
-      <div class="row2"><label class="field">Pagou por<select name="method">${methodOpts(e.method)}</select></label>
-      <label class="field">Dinheiro ficou com<select name="receivedBy">${opt('', '— escolher —', !e.receivedBy)}${peopleOpts(e.receivedBy)}</select></label></div>
-      <label class="check"><input type="checkbox" name="paid" ${e.paid ? 'checked' : ''}> Já pagou</label>
+      <label class="field">Pagou por<select name="method">${Object.entries(METHOD).filter(([k]) => k !== 'own' || playerById(e.playerId)?.org).map(([k, v]) => opt(k, v, k === e.method)).join('')}</select></label>
+      <label class="field">Dinheiro ficou com<select name="recv">${orgOpts(e.recv)}</select></label>
+      <p class="hint">Se o jogador pagou por engano a outro organizador, escolhe aqui quem recebeu. A app trata do resto nos acertos.</p>
       <p class="total">Total <b id="entryTotal">—</b></p>`,
     onMount: (form) => {
-      const upd = () => {
-        const fd = new FormData(form);
-        const q = Math.max(1, Math.round(num(fd.get('qty')) || 1));
-        const t = ev.components.reduce((s, c) => s + (fd.get('on_' + c.id) ? num(fd.get('amt_' + c.id)) : 0), 0) * q;
-        $('#entryTotal').textContent = eur(t);
-        $('#lblWrap').hidden = !!fd.get('personId');
-      };
+      const upd = () => { const fd = new FormData(form); $('#entryTotal').textContent = eur(t.comps.reduce((s, c) => s + (fd.get('on_' + c.key) ? num(fd.get('v_' + c.key)) : 0), 0)); };
       form.addEventListener('input', upd); form.addEventListener('change', upd); upd();
     },
     onSubmit: (fd) => {
-      const qty = Math.round(num(fd.get('qty')));
-      if (qty < 1) return 'A quantidade tem de ser pelo menos 1.';
-      const amounts = {};
-      ev.components.forEach((c) => { if (fd.get('on_' + c.id)) amounts[c.id] = r2(num(fd.get('amt_' + c.id))); });
-      if (!Object.keys(amounts).length) return 'Escolhe pelo menos uma parte (loja, liga, estádios…).';
-      if (!fd.get('receivedBy')) return 'Indica com quem ficou o dinheiro.';
-      const personId = fd.get('personId') || null;
-      if (!personId && !String(fd.get('label')).trim()) return 'Escolhe o jogador ou escreve uma descrição para o lote.';
-      const data = { eventId: ev.id, personId, label: personId ? '' : String(fd.get('label')).trim(), qty, amounts, method: fd.get('method'), receivedBy: fd.get('receivedBy'), paid: !!fd.get('paid') };
-      if (entry) Object.assign(entry, data); else S.entries.push({ id: uid('n'), ...data });
+      const amt = {};
+      t.comps.forEach((c) => { if (fd.get('on_' + c.key)) amt[c.key] = r2(num(fd.get('v_' + c.key))); });
+      const method = fd.get('method');
+      e.amt = amt; e.method = method;
+      e.recv = method === 'own' ? e.playerId : fd.get('recv');
       return null;
     },
   });
 }
 
-function moveForm(type, move, preset = {}) {
-  const tr = S.settings.treasurerId;
-  const m = move || { type, eventId: preset.eventId ?? (UI.tab === 'torneios' ? UI.ev : null), date: todayISO(), method: 'MBWAY', desc: '', amount: preset.amount || '', own: 0, by: preset.by || '', from: preset.from || '', to: preset.to || tr, fundId: preset.fundId || '', fromFundId: '', allocs: preset.allocs || [] };
-  type = m.type;
-  const titles = { pagamento: 'Pagamento', transferencia: 'Envio entre pessoas', deposito: 'Depósito nas contas da org', reembolso: 'Reembolso da conta da org' };
-  const internal = (f) => f.kind !== 'externo';
-  let fields = '';
-  if (type === 'pagamento') {
-    fields = `
-      <label class="field">Quem pagou<select name="by">${opt('', '— escolher —', !m.by)}${opt('org', 'Conta da org (banco)', m.by === 'org')}${peopleOpts(m.by)}</select></label>
-      <label class="field">Para quê<select name="fundId">${opt('', '— escolher —', !m.fundId)}${fundOpts(m.fundId)}</select></label>
-      <label class="field" id="fromWrap">Saiu da conta de<select name="fromFundId">${fundOpts(m.fromFundId || m.fundId, internal)}</select></label>
-      <div class="row2"><label class="field">Valor total<input name="amount" inputmode="decimal" value="${m.amount !== '' ? esc(eurPlain(m.amount)) : ''}" placeholder="0,00"></label>
-      <label class="field" id="ownWrap">Dos quais do próprio bolso<input name="own" inputmode="decimal" value="${esc(eurPlain(m.own || 0))}"></label></div>
-      <p class="hint" id="ownHint">Se a pessoa juntou dinheiro dela para pagar, indica aqui. A app desconta-o no que ela tem de entregar.</p>`;
-  } else if (type === 'transferencia') {
-    fields = `
-      <div class="row2"><label class="field">De<select name="from">${opt('', '— escolher —', !m.from)}${peopleOpts(m.from)}</select></label>
-      <label class="field">Para<select name="to">${opt('', '— escolher —', !m.to)}${peopleOpts(m.to)}</select></label></div>
-      <label class="field">Valor<input name="amount" inputmode="decimal" value="${m.amount !== '' ? esc(eurPlain(m.amount)) : ''}" placeholder="0,00"></label>`;
-  } else if (type === 'deposito') {
-    const allocs = S.funds.filter(internal).map((f) => ({ f, a: (m.allocs || []).find((x) => x.fundId === f.id)?.amount || 0 }));
-    fields = `
-      <label class="field">Quem depositou<select name="by">${opt('', '— escolher —', !m.by)}${peopleOpts(m.by || tr)}</select></label>
-      <fieldset class="comps"><legend>Quanto para cada conta</legend>
-        ${allocs.map(({ f, a }) => `<div class="comp-row"><span>${esc(f.name)} <small class="muted">${esc(f.account || '')}</small></span><input name="al_${f.id}" inputmode="decimal" value="${esc(eurPlain(a))}" aria-label="Valor para ${esc(f.name)}"></div>`).join('')}
-      </fieldset>
-      <p class="total">Total <b id="depTotal">—</b></p>`;
-  } else {
-    fields = `
-      <label class="field">A quem<select name="to">${opt('', '— escolher —', !m.to)}${peopleOpts(m.to)}</select></label>
-      <label class="field">Saiu da conta de<select name="fundId">${fundOpts(m.fundId, internal)}</select></label>
-      <label class="field">Valor<input name="amount" inputmode="decimal" value="${m.amount !== '' ? esc(eurPlain(m.amount)) : ''}" placeholder="0,00"></label>`;
+/* --- Pagamentos --- */
+function vPayments(t, C) {
+  const stores = Object.entries(C.store);
+  const cash = Object.values(C.P).filter((p) => p.cashIn || p.cashOut);
+  return `
+  <section class="block"><h2>Loja</h2>
+    ${stores.length ? stores.map(([id, s]) => { const out = r2(s.due - s.paid); return `<article class="storecard">
+      <div class="sc-head"><h3>${esc(storeById(id)?.name)}</h3>${Math.abs(out) < EPS ? chip('pago', 'ok') : chip(out > 0 ? `faltam ${eur(out)}` : 'pago a mais', out > 0 ? 'warn' : 'bad')}</div>
+      <dl class="sc-meta"><div><dt>A pagar</dt><dd>${eur(s.due)}</dd></div><div><dt>Pago</dt><dd>${eur(s.paid)}</dd></div>${s.debt ? `<div><dt>De jogadores em dívida</dt><dd>${eur(s.debt)}</dd></div>` : ''}</dl>
+      ${out > EPS ? `<button type="button" class="btn primary" data-act="new-move" data-kind="loja" data-store="${id}">Registar pagamento à loja</button>` : ''}
+    </article>`; }).join('') : '<p class="muted">Sem valores de loja no check-in.</p>'}
+  </section>
+  ${cash.length ? `<section class="block"><h2>Numerário</h2><ul class="kv">${cash.map((p) => `<li><span>${esc(pn(p.id))}</span><span>recebeu ${eur(p.cashIn)} · usou ${eur(p.cashOut)} · ${p.cashLeft >= 0 ? `tem ${eur(p.cashLeft)}` : `<b class="neg">falta ${eur(-p.cashLeft)}</b>`}</span></li>`).join('')}</ul></section>` : ''}
+  <section class="block"><h2>Outros movimentos</h2>
+    <div class="bar wrap">${['envio', 'deposito', 'despesa', 'receita', 'reembolso'].map((k) => `<button type="button" class="btn" data-act="new-move" data-kind="${k}">${MOVE_LABEL[k]}</button>`).join('')}</div>
+    <p class="hint">Envio: um organizador passou dinheiro a outro. Depósito: dinheiro entrou numa conta da org. Despesa: algo pago durante o evento (vai para a tabela Despesas do Excel). Receita extra: doação ou outro valor que não é inscrição.</p>
+    ${moveRows(S.moves.filter((m) => m.tid === t.id))}
+  </section>`;
+}
+
+function moveSummary(m) {
+  if (m.kind === 'loja') return `${pn(m.by)} → ${storeById(m.storeId)?.name}` + (num(m.cash) ? ` · ${eur(m.cash)} numerário` : '') + (num(m.own) ? ` · ${eur(m.own)} do bolso` : '');
+  if (m.kind === 'envio') return `${pn(m.from)} → ${pn(m.to)} · ${m.method}`;
+  if (m.kind === 'deposito') return `${pn(m.by)} → ${accById(m.accountId)?.name}`;
+  if (m.kind === 'despesa') return `${pn(m.by)} · ${catById(m.catId)?.name || ''}` + (num(m.own) ? ` · ${eur(m.own)} do bolso` : '');
+  if (m.kind === 'receita') return `${lineById(m.lineId)?.name || ''} · com ${pn(m.recv)}`;
+  return `${accById(m.accountId)?.name} → ${pn(m.to)}`;
+}
+function moveRows(list) {
+  if (!list.length) return '<p class="muted">Sem movimentos.</p>';
+  return `<ul class="rows">${list.slice().sort((a, b) => (b.date || '').localeCompare(a.date || '')).map((m) => `<li><button type="button" class="row" data-act="edit-move" data-id="${m.id}">
+    <span class="row-main"><span class="row-kicker">${MOVE_LABEL[m.kind]} · ${fmtDate(m.date)}</span><b>${esc(m.desc || moveSummary(m))}</b><span class="muted">${esc(moveSummary(m))}</span></span>
+    <span class="row-side">${money(r2(m.amount))}${!m.tid && (m.kind === 'receita' || m.kind === 'despesa') ? (m.launched ? chip('lançado', 'ok') : chip('por lançar', 'warn')) : ''}</span>
+  </button></li>`).join('')}</ul>`;
+}
+
+function moveForm(kind, move, preset = {}) {
+  const t = tourById(move ? move.tid : ('tid' in preset ? preset.tid : UI.tid));
+  const C = t ? compute(t.id) : compute('all');
+  const org = t?.organizerId || S.settings.treasurerId;
+  const m = move || {
+    kind, tid: t?.id || null, date: todayISO(), desc: '', note: '', method: 'MBWAY',
+    amount: preset.amount ?? '', by: preset.by || org, from: preset.from || org, to: preset.to || S.settings.treasurerId,
+    recv: org, storeId: preset.storeId || '', accountId: preset.accountId || S.accounts[0]?.id, catId: S.cats.find((c) => c.fundId === 'f_est')?.id || S.cats[0]?.id, lineId: 'l_doa', cash: 0, own: 0,
+  };
+  kind = m.kind;
+  if (kind === 'loja' && !move) {
+    const s = C.store[m.storeId] || Object.values(C.store)[0];
+    if (!m.storeId) m.storeId = Object.keys(C.store)[0] || S.stores[0]?.id;
+    const due = r2((C.store[m.storeId]?.due || 0) - (C.store[m.storeId]?.paid || 0));
+    m.amount = preset.amount ?? due;
+    const cashAv = Math.max(0, C.P[m.by]?.cashLeft || 0);
+    m.cash = r2(Math.min(cashAv, m.amount || 0));
+    m.own = 0;
+    void s;
   }
+  const amountF = (lbl = 'Valor') => `<label class="field">${lbl}<input name="amount" inputmode="decimal" value="${m.amount !== '' ? esc(eurPlain(m.amount)) : ''}" placeholder="0,00"></label>`;
+  const methodF = (list = MOVE_METHODS) => `<label class="field">Método<select name="method">${list.map((x) => opt(x, x, x === m.method)).join('')}</select></label>`;
+  let fields = '';
+  if (kind === 'loja') {
+    fields = `
+      <div class="row2"><label class="field">Quem pagou<select name="by">${orgOpts(m.by)}</select></label>
+      <label class="field">Loja<select name="storeId">${S.stores.map((s) => opt(s.id, s.name, s.id === m.storeId)).join('')}</select></label></div>
+      ${amountF('Valor pago à loja')}
+      <p class="hint" id="cashHint"></p>
+      <div class="row2"><label class="field">Do numerário recebido<input name="cash" inputmode="decimal" value="${esc(eurPlain(m.cash || 0))}"></label>
+      <label class="field">Do próprio bolso<input name="own" inputmode="decimal" value="${esc(eurPlain(m.own || 0))}"></label></div>
+      <p class="total small">MBWAY / transferência do dinheiro recebido <b id="restV">—</b></p>
+      <p class="hint">O que puseste do próprio bolso é descontado sozinho no que tens de entregar. Não precisas de fazer contas à parte.</p>`;
+  } else if (kind === 'envio') {
+    fields = `<div class="row2"><label class="field">De<select name="from">${orgOpts(m.from)}</select></label><label class="field">Para<select name="to">${orgOpts(m.to)}</select></label></div>${amountF()}${methodF()}`;
+  } else if (kind === 'deposito') {
+    fields = `<div class="row2"><label class="field">Quem depositou<select name="by">${orgOpts(m.by)}</select></label><label class="field">Conta<select name="accountId">${accOpts(m.accountId)}</select></label></div>${amountF()}${methodF(['Transferência', 'MBWAY', 'Numerário'])}`;
+  } else if (kind === 'despesa') {
+    fields = `<label class="field">Descrição (como fica no Excel)<input name="desc" value="${esc(m.desc)}" placeholder="ex.: Pagamento danos Loja Fénix"></label>
+      <div class="row2"><label class="field">Categoria<select name="catId">${catOpts(m.catId)}</select></label><label class="field">Quem pagou<select name="by">${orgOpts(m.by, true)}</select></label></div>
+      ${amountF()}
+      <div class="row2" id="ownRow"><label class="field">Do numerário recebido<input name="cash" inputmode="decimal" value="${esc(eurPlain(m.cash || 0))}"></label><label class="field">Do próprio bolso<input name="own" inputmode="decimal" value="${esc(eurPlain(m.own || 0))}"></label></div>
+      <label class="field">Nota (Excel)<input name="note" value="${esc(m.note || '')}" placeholder="ex.: Incluindo shipping"></label>`;
+  } else if (kind === 'receita') {
+    fields = `<label class="field">Descrição<input name="desc" value="${esc(m.desc)}" placeholder="ex.: Doação"></label>
+      <label class="field">Linha do Excel<select name="lineId">${lineOpts(m.lineId)}</select></label>
+      <div class="row2"><label class="field">Ficou com<select name="recv">${orgOpts(m.recv, true)}</select></label>${methodF()}</div>${amountF()}`;
+  } else {
+    fields = `<div class="row2"><label class="field">Da conta<select name="accountId">${accOpts(m.accountId)}</select></label><label class="field">Para<select name="to">${orgOpts(m.to)}</select></label></div>${amountF()}<p class="hint">Usa quando a org devolve a alguém o que pôs do próprio bolso.</p>`;
+  }
+  const isGeneral = !m.tid && (kind === 'receita' || kind === 'despesa');
   openSheet({
-    title: (move ? 'Editar ' : '') + titles[type].toLowerCase().replace(/^./, (c) => (move ? c : c.toUpperCase())),
+    title: (move ? 'Editar · ' : '') + MOVE_LABEL[kind],
     del: move ? () => { S.moves = S.moves.filter((x) => x.id !== move.id); } : null,
     body: `${fields}
-      <div class="row2"><label class="field">Método<select name="method">${methodOpts(m.method)}</select></label>
-      <label class="field">Data<input type="date" name="date" value="${esc(m.date)}"></label></div>
-      <label class="field">Torneio<select name="eventId">${eventOpts(m.eventId)}</select></label>
-      <label class="field">Descrição<input name="desc" value="${esc(m.desc)}" placeholder="opcional"></label>`,
+      <div class="row2"><label class="field">Data<input type="date" name="date" value="${esc(m.date)}"></label>
+      <label class="field">Torneio<select name="tid">${tourOpts(m.tid)}</select></label></div>
+      ${kind !== 'despesa' && kind !== 'receita' ? `<label class="field">Notas<input name="desc" value="${esc(m.desc)}" placeholder="opcional"></label>` : ''}
+      ${isGeneral && move ? `<div class="bar wrap">${move.launched ? `<span class="muted small">Lançado no Excel em ${fmtDate(move.launched.date)}</span><button type="button" class="btn small ghost" data-act="unlaunch-move" data-id="${move.id}">Desmarcar</button>` : `<button type="button" class="btn small" data-act="launch-move" data-id="${move.id}">Marcar como lançado no Excel</button>`}</div>${excelBlock(excelPlan(null, move.id))}` : ''}`,
     onMount: (form) => {
       const upd = () => {
         const fd = new FormData(form);
-        if (type === 'pagamento') {
-          const org = fd.get('by') === 'org';
-          $('#fromWrap').hidden = !org; $('#ownWrap').hidden = org; $('#ownHint').hidden = org;
+        if (kind === 'loja') {
+          const p = C.P[fd.get('by')];
+          $('#cashHint').textContent = `Numerário da org com ${pn(fd.get('by'))}: ${eur(Math.max(0, (p?.cashLeft || 0) + (move && move.by === fd.get('by') ? num(move.cash) : 0)))}.`;
+          $('#restV').textContent = eur(num(fd.get('amount')) - num(fd.get('cash')) - num(fd.get('own')));
         }
-        if (type === 'deposito') $('#depTotal').textContent = eur(S.funds.filter(internal).reduce((s, f) => s + num(fd.get('al_' + f.id)), 0));
+        if (kind === 'despesa') $('#ownRow').hidden = String(fd.get('by')).startsWith('acc:');
       };
       form.addEventListener('input', upd); form.addEventListener('change', upd); upd();
     },
     onSubmit: (fd) => {
-      const base = { type, eventId: fd.get('eventId') || null, date: fd.get('date') || todayISO(), method: fd.get('method'), desc: String(fd.get('desc') || '').trim() };
-      let data;
-      if (type === 'deposito') {
-        const allocs = S.funds.filter(internal).map((f) => ({ fundId: f.id, amount: r2(num(fd.get('al_' + f.id))) })).filter((a) => a.amount);
-        if (!fd.get('by')) return 'Indica quem depositou.';
-        if (!allocs.length) return 'Indica quanto entrou em pelo menos uma conta.';
-        data = { ...base, by: fd.get('by'), allocs };
-      } else {
-        const amount = r2(num(fd.get('amount')));
-        if (amount <= 0) return 'O valor tem de ser maior que zero.';
-        if (type === 'pagamento') {
-          const by = fd.get('by'), fundId = fd.get('fundId');
-          if (!by) return 'Indica quem pagou.';
-          if (!fundId) return 'Indica para que foi o pagamento.';
-          const own = by === 'org' ? 0 : r2(num(fd.get('own')));
-          if (own < 0 || own > amount) return 'O valor do próprio bolso tem de estar entre 0 e o total.';
-          if (by === 'org' && isExt(fd.get('fromFundId'))) return 'Escolhe uma conta interna.';
-          data = { ...base, by, fundId, fromFundId: by === 'org' ? fd.get('fromFundId') || fundId : '', amount, own };
-        } else if (type === 'transferencia') {
-          if (!fd.get('from') || !fd.get('to')) return 'Indica de quem e para quem.';
-          if (fd.get('from') === fd.get('to')) return 'Quem envia e quem recebe têm de ser pessoas diferentes.';
-          data = { ...base, from: fd.get('from'), to: fd.get('to'), amount };
-        } else {
-          if (!fd.get('to')) return 'Indica a quem foi pago o reembolso.';
-          data = { ...base, to: fd.get('to'), fundId: fd.get('fundId'), amount };
-        }
-      }
-      if (move) { Object.keys(move).forEach((k) => { if (k !== 'id') delete move[k]; }); Object.assign(move, data); } else S.moves.push({ id: uid('m'), ...data });
+      const amount = r2(num(fd.get('amount')));
+      if (amount <= 0) return 'O valor tem de ser maior que zero.';
+      const base = { kind, tid: fd.get('tid') || null, date: fd.get('date') || todayISO(), desc: String(fd.get('desc') || '').trim(), amount };
+      let d;
+      if (kind === 'loja') {
+        const cash = r2(num(fd.get('cash'))), own = r2(num(fd.get('own')));
+        if (cash < 0 || own < 0 || cash + own > amount + EPS) return 'Numerário + próprio bolso não pode ser mais do que o valor pago.';
+        d = { ...base, by: fd.get('by'), storeId: fd.get('storeId'), cash, own };
+      } else if (kind === 'envio') {
+        if (fd.get('from') === fd.get('to')) return 'Quem envia e quem recebe têm de ser pessoas diferentes.';
+        d = { ...base, from: fd.get('from'), to: fd.get('to'), method: fd.get('method') };
+      } else if (kind === 'deposito') d = { ...base, by: fd.get('by'), accountId: fd.get('accountId'), method: fd.get('method') };
+      else if (kind === 'despesa') {
+        const byAcc = String(fd.get('by')).startsWith('acc:');
+        const cash = byAcc ? 0 : r2(num(fd.get('cash'))), own = byAcc ? 0 : r2(num(fd.get('own')));
+        if (cash + own > amount + EPS) return 'Numerário + próprio bolso não pode ser mais do que o valor.';
+        if (!base.desc) return 'Escreve a descrição, tal como vai aparecer no Excel.';
+        d = { ...base, by: fd.get('by'), catId: fd.get('catId'), note: String(fd.get('note') || '').trim(), cash, own };
+      } else if (kind === 'receita') d = { ...base, recv: fd.get('recv'), lineId: fd.get('lineId'), method: fd.get('method') };
+      else d = { ...base, accountId: fd.get('accountId'), to: fd.get('to') };
+      if (move) { const keep = { id: move.id, launched: move.launched || null }; Object.keys(move).forEach((k) => delete move[k]); Object.assign(move, keep, d); }
+      else S.moves.push({ id: uid('m'), ...d });
       return null;
     },
   });
 }
 
-function compRow(c) {
-  return `<div class="comp-edit" data-cid="${esc(c.id)}">
-    <div class="row2"><label class="field">Parte<input name="cl_${c.id}" value="${esc(c.label)}" placeholder="ex.: Loja"></label><label class="field">Preço<input name="cp_${c.id}" inputmode="decimal" value="${esc(eurPlain(c.price || 0))}"></label></div>
-    <label class="field">Vai para<select name="cf_${c.id}">${fundOpts(c.fundId)}</select></label>
-    <label class="field">Linha no Excel<input name="cx_${c.id}" value="${esc(c.excel || '')}" placeholder="ex.: Contribuições Mensais"></label>
-    <div class="comp-foot"><label class="check"><input type="checkbox" name="cd_${c.id}" ${c.def !== false ? 'checked' : ''}> Faz parte da inscrição normal</label><button type="button" class="link danger" data-act="rm-comp">Remover</button></div>
-  </div>`;
+/* --- Acertos --- */
+function vSettle(t, C) {
+  const pids = Object.keys(C.P);
+  const others = Object.entries(C.recvBy).filter(([, r]) => r.others.length);
+  return `
+  ${alertList(alertsFor(t.id))}
+  <section class="block"><h2>O que cada um tem de fazer</h2>
+    ${pids.length ? `<ul class="settle">${pids.map((pid) => settleRow(C, pid, t.id)).join('')}</ul>` : '<p class="muted">Ainda não há dinheiro registado.</p>'}
+  </section>
+  ${others.length ? `<section class="block"><h2>Pagaram a outro organizador</h2><ul class="kv">${others.map(([pid, r]) => `<li><span>${esc(pn(pid))} recebeu de</span><span>${r.others.map((e) => `${esc(pn(e.playerId))} ${eur(entryTotal(e))}`).join(', ')}</span></li>`).join('')}</ul></section>` : ''}
+  <section class="block"><h2>Conta de cada um</h2><div class="pgrid">${pids.map((pid) => {
+    const p = C.P[pid];
+    return `<article class="pcard"><header><h3>${esc(pn(pid))}</h3></header>
+      <table class="calc"><tbody>${p.lines.map((l) => `<tr><td>${esc(l.t)}</td><td>${money(l.v, true)}</td></tr>`).join('')}</tbody>
+      <tfoot><tr><td>${p.held >= 0 ? 'Tem da org' : 'A org deve-lhe'}</td><td>${eur(Math.abs(p.held))}</td></tr></tfoot></table>
+      ${p.cashIn || p.cashOut ? `<p class="muted small">Numerário: recebeu ${eur(p.cashIn)}, usou ${eur(p.cashOut)}${p.own ? `, pôs ${eur(p.own)} do bolso` : ''}.</p>` : ''}
+    </article>`;
+  }).join('')}</div></section>
+  <section class="block"><h2>Para onde vai o dinheiro</h2>
+    <div class="tablewrap"><table class="data compact"><thead><tr><th>Destino</th><th>Devido</th><th>Chegou</th><th>Falta</th></tr></thead><tbody>
+    ${Object.entries(C.store).map(([id, s]) => `<tr><td>${esc(storeById(id)?.name)}</td><td>${eur(s.due)}</td><td>${eur(s.paid)}</td><td>${Math.abs(s.due - s.paid) < EPS ? '✓' : eur(s.due - s.paid)}</td></tr>`).join('')}
+    ${C.accs.filter((a) => a.excel || a.bank).map((a) => `<tr><td>${esc(accById(a.id)?.name)}</td><td>${eur(a.excel)}</td><td>${eur(a.bank)}</td><td>${Math.abs(a.pending) < EPS ? '✓' : eur(a.pending)}</td></tr>`).join('')}
+    </tbody></table></div>
+    <p class="verify ${C.balanced ? 'ok' : 'bad'}">${C.balanced ? '✓ As contas batem: o dinheiro com pessoas é igual ao que falta chegar à loja e às contas.' : '✗ As contas não batem. Revê os movimentos.'}</p>
+  </section>`;
 }
 
-function eventForm(ev, copyFrom) {
-  const src = ev || copyFrom;
-  const e = src ? JSON.parse(JSON.stringify(src)) : { name: '', date: todayISO(), organizerId: S.settings.treasurerId, notes: '', components: [] };
-  if (!ev) { e.date = todayISO(); e.notes = ''; if (copyFrom) e.name = copyFrom.name.replace(/(\d+)(?!.*\d)/, (d) => String(+d + 1)); e.components = e.components.map((c) => ({ ...c, id: uid('c') })); }
-  if (!e.components.length) {
-    const fL = S.funds.find((f) => f.kind !== 'externo'), fJ = S.funds.find((f) => f.kind === 'externo');
-    e.components = [fJ && { id: uid('c'), label: 'Loja', fundId: fJ.id, price: 2, excel: '', def: true }, fL && { id: uid('c'), label: 'Liga', fundId: fL.id, price: 1, excel: '', def: true }].filter(Boolean);
-  }
+/* --- Excel --- */
+function excelBlock(p) {
+  const tsvIncome = p.lines.map((l) => [l.section, l.name, eurPlain(l.after)].join('\t')).join('\n');
+  const tsvExp = p.exp.map((x) => [x.desc, x.date, x.cat, x.note, eurPlain(x.value)].join('\t')).join('\n');
+  const changed = p.lines.some((l) => l.changed);
+  return `
+  <section class="block"><h2>Budget Geral · Income</h2>
+    ${p.lines.length ? `<ul class="xlist">${p.lines.map((l) => `<li${l.changed ? ' class="hl"' : ''}><div class="x-name">${esc(l.name)}<small class="muted">${esc(l.section)}</small></div>
+      <div class="x-vals"><span class="muted">${eur(l.before)}</span><span class="pos">+${eur(l.delta)}</span><b>${eur(l.after)}</b></div>
+      ${l.changed ? `<p class="x-fix">Já lançado: +${eur(l.was || 0)} · corrigir <b>${money(r2(l.delta - (l.was || 0)), true)}</b></p>` : ''}</li>`).join('')}</ul>
+    <button type="button" class="btn small" data-act="copy" data-text="${esc(tsvIncome)}">Copiar valores finais</button>` : '<p class="muted">Nada a somar.</p>'}
+  </section>
+  ${p.exp.length ? `<section class="block"><h2>Budget Geral · Despesas (linhas novas)</h2>
+    <div class="tablewrap"><table class="data"><thead><tr><th>Descrição</th><th>Data</th><th>Categoria</th><th>Nota</th><th>Valor</th></tr></thead><tbody>
+    ${p.exp.map((x) => `<tr><td>${esc(x.desc)}</td><td>${esc(x.date)}</td><td>${esc(x.cat)}</td><td>${esc(x.note)}</td><td>${eur(x.value)}</td></tr>`).join('')}
+    </tbody></table></div><button type="button" class="btn small" data-act="copy" data-text="${esc(tsvExp)}">Copiar linhas</button>
+    <p class="hint">Cola na primeira linha vazia da tabela Despesas: as colunas ficam no sítio.</p></section>` : ''}
+  ${p.users.length || p.extras.length ? `<section class="block"><h2>Users/Estadios</h2>
+    ${p.users.length ? `<p>Na coluna <b>${esc(monthName(p.month))}</b>, marca ✓ em ${p.users.length} jogador(es):</p><ul class="namechips">${p.users.map((u) => `<li>${esc(u)}</li>`).join('')}</ul><button type="button" class="btn small" data-act="copy" data-text="${esc(p.users.join('\n'))}">Copiar nomes</button>` : ''}
+    ${p.extras.length ? `<p>Em <b>Contribuição adicional</b>, soma:</p><ul class="kv">${p.extras.map((x) => `<li><span>${esc(x.name)}</span><span>+${eur(x.value)}</span></li>`).join('')}</ul>` : ''}
+  </section>` : ''}
+  <section class="block"><h2>Confirma os saldos</h2>
+    <ul class="xlist">${p.funds.concat([{ name: 'Saldo Corrente', ...p.corrente, sum: true }]).map((f) => `<li${f.sum ? ' class="sum"' : ''}><div class="x-name">${esc(f.name)}</div>
+      <div class="x-vals"><span class="muted">${eur(f.before)}</span>${f.delta ? money(f.delta, true) : '<span class="muted">—</span>'}<b>${eur(f.after)}</b></div></li>`).join('')}</ul>
+    <p class="hint">Depois de preencheres, os cartões verdes do Excel devem mostrar estes valores. Se não mostrarem, há um erro no Excel.</p>
+  </section>`;
+}
+
+function vExcel(t) {
+  const p = excelPlan(t.id);
+  const C = compute(t.id);
+  const ready = !C.debtN;
+  return `
+  ${t.example ? '<p class="banner">Exemplo: o Excel real já inclui a Semana 5. Não apliques estes valores.</p>' : ''}
+  ${t.launched ? `<p class="note">Lançado no Excel em ${fmtDate(t.launched.date)}.</p>` : (!ready ? `<p class="alert warn"><span class="dot"></span>Há ${C.debtN} jogador(es) em dívida. Podes lançar já o que foi pago e voltar a lançar a diferença depois.</p>` : '')}
+  ${excelBlock(p)}
+  <section class="block"><div class="bar wrap">
+    ${t.example ? '' : t.launched ? `<button type="button" class="btn" data-act="launch" data-id="${t.id}">Atualizar como lançado</button><button type="button" class="btn ghost" data-act="unlaunch" data-id="${t.id}">Desmarcar</button>` : `<button type="button" class="btn primary" data-act="launch" data-id="${t.id}">Marcar como lançado no Excel</button>`}
+    <button type="button" class="btn" data-act="exp-excel" data-id="${t.id}">Exportar CSV</button>
+  </div>
+  <p class="hint">Marca como lançado depois de preencheres o Excel. A partir daí, os valores "Antes" dos próximos torneios já contam com este, e se alguém mudar este torneio a app avisa o que corrigir.</p></section>`;
+}
+
+/* --- Relatório --- */
+function vReport(t) {
+  const txt = discordReport(t.id, UI.withPlayers);
+  return `
+  <section class="block"><h2>Mensagem para o Discord</h2>
+    <label class="check"><input type="checkbox" id="withPlayers" ${UI.withPlayers ? 'checked' : ''}> Incluir lista de jogadores</label>
+    <pre class="report">${esc(txt)}</pre>
+    <button type="button" class="btn primary" data-act="copy" data-text="${esc(txt)}">Copiar mensagem</button>
+  </section>
+  <section class="block"><h2>Exportar</h2>
+    <div class="bar wrap">
+      <button type="button" class="btn" data-act="exp-checkin" data-id="${t.id}">CSV do check-in</button>
+      <button type="button" class="btn" data-act="exp-excel" data-id="${t.id}">CSV para o Excel</button>
+      <button type="button" class="btn" data-act="exp-tour" data-id="${t.id}">Enviar torneio a outro organizador</button>
+    </div>
+    <p class="hint">"Enviar torneio" cria um ficheiro que o outro organizador importa em Mais › Dados. Jogadores com o mesmo nome juntam-se sozinhos.</p>
+  </section>`;
+}
+
+/* --- Formulário do torneio e partes da inscrição --- */
+function compEditor(comps) {
+  const row = (c) => `<div class="comp-edit" data-key="${esc(c.key)}">
+    <div class="row2"><label class="field">Parte<input name="cl_${c.key}" value="${esc(c.label)}"></label><label class="field">Preço<input name="cp_${c.key}" inputmode="decimal" value="${esc(eurPlain(c.price))}"></label></div>
+    <label class="field">Vai para<select name="cd_${c.key}">${S.stores.map((s) => opt('store:' + s.id, s.name + ' (paga-se à loja)', c.kind === 'loja' && c.storeId === s.id)).join('')}${SECTIONS.map((sec) => `<optgroup label="Excel · ${esc(sec)}">${S.lines.filter((l) => l.section === sec).map((l) => opt('line:' + l.id, l.name, c.kind === 'line' && c.lineId === l.id)).join('')}</optgroup>`).join('')}</select></label>
+    <div class="comp-foot"><label class="check"><input type="checkbox" name="cf_${c.key}" ${c.def ? 'checked' : ''}> Marcada por defeito</label><label class="check"><input type="checkbox" name="cm_${c.key}" ${c.monthly ? 'checked' : ''}> Uma vez por mês</label><button type="button" class="link danger" data-act="rm-comp">Remover</button></div>
+  </div>`;
+  compEditor.row = row;
+  return `<fieldset class="comps"><legend>Partes de cada inscrição</legend><div id="compList">${comps.map(row).join('')}</div><button type="button" class="btn small" data-act="add-comp">Adicionar parte</button></fieldset>`;
+}
+function readComps(fd, form, old) {
+  return $$('.comp-edit', form).map((el) => {
+    const k = el.dataset.key;
+    const dest = String(fd.get('cd_' + k) || '');
+    const prev = old.find((c) => c.key === k) || {};
+    const c = { key: k, label: String(fd.get('cl_' + k)).trim(), price: r2(num(fd.get('cp_' + k))), def: !!fd.get('cf_' + k), monthly: !!fd.get('cm_' + k), extra: !!prev.extra };
+    if (dest.startsWith('store:')) { c.kind = 'loja'; c.storeId = dest.slice(6); } else { c.kind = 'line'; c.lineId = dest.slice(5); }
+    return c;
+  });
+}
+
+function tourForm(t) {
+  const type0 = S.types[0];
+  const d = t || { name: '', date: todayISO(), typeId: type0?.id, organizerId: S.settings.treasurerId, comps: [] };
+  const autoName = (typeId, date) => `${typeById(typeId)?.name || 'Torneio'} · ${fmtDate(date).slice(0, 5)}`;
   openSheet({
-    title: ev ? 'Editar torneio' : 'Novo torneio',
-    del: ev ? () => { S.events = S.events.filter((x) => x.id !== ev.id); S.entries = S.entries.filter((x) => x.eventId !== ev.id); S.moves = S.moves.filter((x) => x.eventId !== ev.id); UI.ev = null; } : null,
+    title: t ? 'Editar torneio' : 'Novo torneio',
+    submit: t ? 'Guardar' : 'Criar e abrir check-in',
+    del: t ? () => { S.tournaments = S.tournaments.filter((x) => x.id !== t.id); S.entries = S.entries.filter((x) => x.tid !== t.id); S.moves = S.moves.filter((x) => x.tid !== t.id); UI.tid = null; } : null,
+    delLabel: 'Apagar torneio',
     body: `
-      <label class="field">Nome<input name="name" value="${esc(e.name)}" placeholder="ex.: Liga Fénix Negra S2 · Semana 6"></label>
-      <div class="row2"><label class="field">Data<input type="date" name="date" value="${esc(e.date)}"></label>
-      <label class="field">Quem organiza<select name="organizerId">${opt('', '—', !e.organizerId)}${peopleOpts(e.organizerId)}</select></label></div>
-      <fieldset class="comps"><legend>Partes de cada inscrição</legend><div id="compList">${e.components.map(compRow).join('')}</div>
-      <button type="button" class="btn small" data-act="add-comp">Adicionar parte</button></fieldset>
-      <label class="field">Notas<textarea name="notes" rows="2">${esc(e.notes || '')}</textarea></label>
-      ${ev ? '<p class="hint">Apagar o torneio apaga também as inscrições e movimentos dele.</p>' : ''}`,
+      <label class="field">Tipo<select name="typeId">${S.types.map((x) => opt(x.id, x.name, x.id === d.typeId)).join('')}</select></label>
+      <div class="row2"><label class="field">Data<input type="date" name="date" value="${esc(d.date)}"></label>
+      <label class="field">Quem organiza<select name="organizerId">${orgOpts(d.organizerId)}</select></label></div>
+      <label class="field">Nome<input name="name" value="${esc(d.name || autoName(d.typeId, d.date))}" data-auto="${t ? '' : '1'}"></label>
+      ${t ? compEditor(t.comps) + '<p class="hint">Mudar as partes aqui só afeta este torneio. Para mudar todos os futuros, edita o tipo em Mais.</p>' : '<p class="hint">Os preços e linhas do Excel vêm do tipo de torneio (Mais › Tipos de torneio). Podes ajustá-los depois em Editar.</p>'}
+      ${t ? '<p class="hint">Apagar o torneio apaga também o check-in e os movimentos dele.</p>' : ''}`,
+    onMount: (form) => {
+      if (t) return;
+      const nameI = form.elements.name;
+      nameI.addEventListener('input', () => { nameI.dataset.auto = ''; });
+      form.addEventListener('change', () => { if (nameI.dataset.auto) nameI.value = autoName(form.elements.typeId.value, form.elements.date.value); });
+    },
     onSubmit: (fd, form) => {
       const name = String(fd.get('name')).trim();
       if (!name) return 'Dá um nome ao torneio.';
-      const comps = $$('.comp-edit', form).map((el) => {
-        const id = el.dataset.cid;
-        return { id, label: String(fd.get('cl_' + id)).trim(), fundId: fd.get('cf_' + id), price: r2(num(fd.get('cp_' + id))), excel: String(fd.get('cx_' + id) || '').trim(), def: !!fd.get('cd_' + id) };
-      });
-      if (!comps.length) return 'Adiciona pelo menos uma parte (ex.: Loja, Liga).';
-      if (comps.some((c) => !c.label || !c.fundId)) return 'Cada parte precisa de nome e de fundo.';
-      if (ev) {
-        const kept = new Set(comps.map((c) => c.id));
-        const gone = ev.components.filter((c) => !kept.has(c.id) && S.entries.some((x) => x.eventId === ev.id && x.amounts && x.amounts[c.id] != null));
-        if (gone.length) return `"${gone[0].label}" já tem inscrições. Tira-a das inscrições antes de a remover.`;
-        Object.assign(ev, { name, date: fd.get('date'), organizerId: fd.get('organizerId'), notes: String(fd.get('notes') || ''), components: comps });
+      if (!fd.get('organizerId')) return 'Escolhe quem organiza (marca organizadores em Jogadores).';
+      if (t) {
+        const comps = readComps(fd, form, t.comps);
+        if (comps.some((c) => !c.label)) return 'Cada parte precisa de nome.';
+        const gone = t.comps.filter((c) => !comps.some((x) => x.key === c.key) && S.entries.some((e) => e.tid === t.id && e.amt[c.key] != null));
+        if (gone.length) return `"${gone[0].label}" tem valores no check-in. Desmarca-a nos jogadores antes de a remover.`;
+        Object.assign(t, { name, date: fd.get('date'), typeId: fd.get('typeId'), organizerId: fd.get('organizerId'), comps });
       } else {
-        const id = uid('e');
-        S.events.push({ id, name, date: fd.get('date'), organizerId: fd.get('organizerId'), notes: String(fd.get('notes') || ''), components: comps });
-        UI.ev = id; UI.evTab = 'inscricoes'; UI.tab = 'torneios'; S.settings.seeded = false;
+        const type = typeById(fd.get('typeId'));
+        const id = uid('t');
+        S.tournaments.push({ id, name, date: fd.get('date'), typeId: type.id, organizerId: fd.get('organizerId'), comps: JSON.parse(JSON.stringify(type.comps)), notes: '', example: false, launched: null });
+        UI.tid = id; UI.tTab = 'checkin'; UI.tab = 'torneios';
       }
       return null;
     },
   });
 }
 
-function personForm(p) {
+/* ---------- Jogadores ---------- */
+function vPlayers() {
+  const q = UI.pq.trim().toLowerCase();
+  const month = monthKey(todayISO());
+  const list = S.players.filter((p) => !q || p.name.toLowerCase().includes(q));
+  return `
+  <header class="top"><div><p class="eyebrow">${S.players.length} jogadores</p><h1>Jogadores</h1></div><button type="button" class="btn primary" data-act="new-player">Adicionar</button></header>
+  <input id="pSearch" type="search" autocomplete="off" placeholder="Procurar…" value="${esc(UI.pq)}" aria-label="Procurar jogador">
+  <p class="hint">✓ ${esc(monthName(month))} = já pagou a mensal de estádios deste mês (no Excel ou num torneio da app).</p>
+  <ul class="rows" id="pList">${playerRows(list, month)}</ul>`;
+}
+
+function playerRows(list, month) {
+  return `${list.map((p) => {
+    const paid = monthlyPaidElsewhere(p.id, month);
+    const n = S.entries.filter((e) => e.playerId === p.id && !isExample(e.tid)).length;
+    return `<li><button type="button" class="row" data-act="edit-player" data-id="${p.id}"><span class="row-main"><b>${esc(p.name)}</b><span class="muted small">${n} torneio(s) na app</span></span><span class="row-side">${paid ? chip('✓ ' + monthName(month).slice(0, 3), 'ok') : chip('— ' + monthName(month).slice(0, 3))}${p.org ? chip('organizador', 'soft') : ''}</span></button></li>`;
+  }).join('') || '<li class="muted pad">Nenhum jogador com esse nome.</li>'}`;
+}
+
+function playerForm(p, presetName, after) {
+  const year = todayISO().slice(0, 4);
+  const hist = p ? S.entries.filter((e) => e.playerId === p.id && !isExample(e.tid)).map((e) => ({ t: tourById(e.tid), e })).filter((x) => x.t).sort((a, b) => b.t.date.localeCompare(a.t.date)) : [];
+  const used = p && (S.entries.some((e) => e.playerId === p.id || e.recv === p.id) || S.moves.some((m) => [m.by, m.from, m.to, m.recv].includes(p.id)));
   openSheet({
-    title: p ? 'Editar pessoa' : 'Nova pessoa',
-    del: p ? () => { S.people = S.people.filter((x) => x.id !== p.id); } : null,
-    body: `<label class="field">Nome<input name="name" value="${esc(p?.name || '')}"></label>
-      <label class="check"><input type="checkbox" name="organizer" ${p?.organizer ? 'checked' : ''}> Organizador (recebe dinheiro em torneios)</label>`,
+    title: p ? p.name : 'Novo jogador',
+    del: p && !used ? () => { S.players = S.players.filter((x) => x.id !== p.id); } : null,
+    body: `
+      <label class="field">Nome (como no Excel)<input name="name" value="${esc(p?.name || presetName || '')}" placeholder="username Challonge (Nome)"></label>
+      <label class="check"><input type="checkbox" name="org" ${p?.org ? 'checked' : ''}> Organizador (recebe dinheiro nos torneios)</label>
+      <fieldset class="comps"><legend>Mensal de estádios marcada no Excel (${year})</legend>
+        <div class="months">${MONTHS.map((m, i) => { const k = `${year}-${pad2(i + 1)}`; return `<label class="check"><input type="checkbox" name="mo_${k}" ${p?.months?.[k] ? 'checked' : ''}> ${m.slice(0, 3)}</label>`; }).join('')}</div>
+        <p class="hint">Usa para meses pagos antes da app. Os pagos em torneios da app contam sozinhos.</p>
+      </fieldset>
+      ${hist.length ? `<h3 class="sub">Histórico</h3><ul class="kv">${hist.map(({ t, e }) => `<li><span>${esc(t.name)} <small class="muted">${fmtDate(t.date)}</small></span><span>${eur(entryTotal(e))} ${chip(METHOD[e.method], e.method === 'debt' ? 'warn' : '')}</span></li>`).join('')}</ul>` : ''}
+      ${used ? '<p class="hint">Não dá para apagar: tem inscrições ou movimentos.</p>' : ''}`,
     onSubmit: (fd) => {
       const name = String(fd.get('name')).trim();
       if (!name) return 'Escreve o nome.';
-      if (S.people.some((x) => x.id !== p?.id && x.name.toLowerCase() === name.toLowerCase())) return 'Já existe uma pessoa com esse nome.';
-      if (p) Object.assign(p, { name, organizer: !!fd.get('organizer') });
-      else S.people.push({ id: uid('p'), name, organizer: !!fd.get('organizer') });
+      if (S.players.some((x) => x.id !== p?.id && x.name.toLowerCase() === name.toLowerCase())) return 'Já existe um jogador com esse nome.';
+      const months = { ...(p?.months || {}) };
+      MONTHS.forEach((m, i) => { const k = `${year}-${pad2(i + 1)}`; if (fd.get('mo_' + k)) months[k] = true; else delete months[k]; });
+      if (p) Object.assign(p, { name, org: !!fd.get('org'), months });
+      else {
+        let id = slugId(name); if (playerById(id)) id = uid('p');
+        S.players.push({ id, name, org: !!fd.get('org'), months });
+        if (after) after(id);
+      }
       return null;
     },
   });
-  if (p) {
-    const used = S.entries.some((e) => e.personId === p.id || e.receivedBy === p.id) || S.moves.some((m) => [m.by, m.from, m.to].includes(p.id));
-    if (used) { const b = $('#sheetDel'); b.disabled = true; b.title = 'Tem inscrições ou movimentos'; b.textContent = 'Em uso'; }
-  }
 }
 
-function fundForm(f) {
+/* ---------- Mais ---------- */
+function vMais() {
+  const cur = excelCurrent();
+  const general = S.moves.filter((m) => !m.tid);
+  return `
+  <header class="top"><div><p class="eyebrow">Definições</p><h1>Mais</h1></div></header>
+  <section class="block"><h2>Tesoureiro</h2>
+    <label class="field">Dono das contas da org (recebe o dinheiro no fim)<select id="treasurer">${opt('', '— escolher —', !S.settings.treasurerId)}${orgOpts(S.settings.treasurerId)}</select></label>
+  </section>
+  <section class="block"><h2>Movimentos gerais</h2>
+    <p class="hint">Receitas, despesas e depósitos que não pertencem a um torneio (ex.: doações, estádios comprados, danos).</p>
+    <div class="bar wrap">${['despesa', 'receita', 'deposito', 'envio', 'reembolso'].map((k) => `<button type="button" class="btn small" data-act="new-move" data-kind="${k}" data-general="1">${MOVE_LABEL[k]}</button>`).join('')}</div>
+    ${moveRows(general)}
+  </section>
+  <section class="block"><h2>Tipos de torneio</h2>
+    <ul class="kv">${S.types.map((x) => `<li><button type="button" class="linkrow" data-act="edit-type" data-id="${x.id}"><span>${esc(x.name)}</span><span class="muted small">${x.comps.map((c) => `${esc(c.label)} ${eurPlain(c.price)}`).join(' · ')}</span></button></li>`).join('')}</ul>
+    <button type="button" class="btn small" data-act="new-type">Adicionar tipo</button>
+  </section>
+  <section class="block"><h2>Excel e contas</h2>
+    <p class="hint">Valores base (o que o Excel tinha quando começaste a usar a app). Os torneios marcados como lançados somam-se a estes.</p>
+    <h3 class="sub">Linhas de receita</h3>
+    <ul class="kv">${S.lines.map((l) => `<li><button type="button" class="linkrow" data-act="edit-line" data-id="${l.id}"><span>${esc(l.name)} <small class="muted">${esc(l.section)} · ${esc(fundById(l.fundId)?.name || '')}</small></span><span>${eur(cur.lines[l.id] || 0)}</span></button></li>`).join('')}</ul>
+    <button type="button" class="btn small" data-act="new-line">Adicionar linha</button>
+    <h3 class="sub">Saldos (cartões verdes)</h3>
+    <ul class="kv">${S.funds.map((f) => `<li><button type="button" class="linkrow" data-act="edit-fund" data-id="${f.id}"><span>${esc(f.name)} <small class="muted">${esc(accById(f.accountId)?.name || '')}</small></span><span>${eur(cur.funds[f.id] || 0)}</span></button></li>`).join('')}</ul>
+    <button type="button" class="btn small" data-act="new-fund">Adicionar saldo</button>
+    <h3 class="sub">Contas bancárias</h3>
+    <ul class="kv">${S.accounts.map((a) => `<li><button type="button" class="linkrow" data-act="edit-acc" data-id="${a.id}"><span>${esc(a.name)} <small class="muted">base em ${fmtDate(a.openingDate)}</small></span><span>${eur(a.opening)}</span></button></li>`).join('')}</ul>
+    <button type="button" class="btn small" data-act="new-acc">Adicionar conta</button>
+    <h3 class="sub">Categorias de despesas</h3>
+    <ul class="kv">${S.cats.map((c) => `<li><button type="button" class="linkrow" data-act="edit-cat" data-id="${c.id}"><span>${esc(c.name)}</span><span class="muted small">${esc(fundById(c.fundId)?.name || '')}</span></button></li>`).join('')}</ul>
+    <button type="button" class="btn small" data-act="new-cat">Adicionar categoria</button>
+    <h3 class="sub">Lojas</h3>
+    <ul class="kv">${S.stores.map((s) => `<li><button type="button" class="linkrow" data-act="edit-store" data-id="${s.id}"><span>${esc(s.name)}</span><span></span></button></li>`).join('')}</ul>
+    <button type="button" class="btn small" data-act="new-store">Adicionar loja</button>
+  </section>
+  <section class="block"><h2>Dados</h2>
+    <p class="hint">Os dados ficam só neste telemóvel. Faz uma cópia de segurança de vez em quando.</p>
+    <div class="bar wrap">
+      <button type="button" class="btn" data-act="exp-backup">Cópia de segurança (JSON)</button>
+      <button type="button" class="btn" data-act="copy-backup">Copiar cópia de segurança</button>
+    </div>
+    <h3 class="sub">Importar</h3>
+    <label class="field">Ficheiro (.json)<input type="file" id="importFile" accept=".json,application/json"></label>
+    <label class="field">ou cola o conteúdo<textarea id="importText" rows="3" placeholder='{"version":2,…}'></textarea></label>
+    <div class="bar wrap"><button type="button" class="btn primary" data-act="import" data-mode="merge">Juntar aos meus dados</button><button type="button" class="btn ghost danger" data-act="import" data-mode="replace">Substituir tudo</button></div>
+    <h3 class="sub">Exemplo e recomeço</h3>
+    <div class="bar wrap">
+      ${S.tournaments.some((t) => t.example) ? '<button type="button" class="btn ghost" data-act="rm-example">Apagar torneio de exemplo</button>' : '<button type="button" class="btn ghost" data-act="add-example">Mostrar torneio de exemplo</button>'}
+      <button type="button" class="btn ghost danger" data-act="reset">Repor dados iniciais</button>
+    </div>
+  </section>
+  <section class="block"><h2>Instalar no telemóvel</h2>
+    <p><b>iPhone:</b> abre no Safari › Partilhar › Adicionar ao ecrã principal.<br><b>Android:</b> abre no Chrome › menu ⋮ › Instalar app.</p>
+    <button type="button" class="btn" id="installBtn" data-act="install" hidden>Instalar agora</button>
+  </section>`;
+}
+
+/* Formulários simples para entidades de configuração */
+function simpleForm({ title, item, fields, onSave, onDelete, canDelete = true }) {
   openSheet({
-    title: f ? 'Editar fundo' : 'Novo fundo',
-    del: f ? () => { S.funds = S.funds.filter((x) => x.id !== f.id); } : null,
-    body: `<label class="field">Nome<input name="name" value="${esc(f?.name || '')}" placeholder="ex.: Liga Fénix"></label>
-      <label class="field">Tipo<select name="kind">${opt('interno', 'Interno: fica na org', f?.kind !== 'externo')}${opt('externo', 'Externo: é pago a terceiros (ex.: loja)', f?.kind === 'externo')}</select></label>
-      <label class="field">Conta bancária<input name="account" value="${esc(f?.account || '')}" placeholder="ex.: BBPT Liga"></label>
-      <div class="row2"><label class="field">Saldo inicial<input name="opening" inputmode="decimal" value="${esc(eurPlain(f?.opening || 0))}"></label>
-      <label class="field">Em<input type="date" name="openingDate" value="${esc(f?.openingDate || '')}"></label></div>`,
+    title,
+    del: item && onDelete && canDelete ? onDelete : null,
+    body: fields.map((f) => {
+      const v = item ? item[f.k] : f.def;
+      if (f.type === 'select') return `<label class="field">${esc(f.label)}<select name="${f.k}">${f.options.map(([val, lab]) => opt(val, lab, val === v)).join('')}</select></label>`;
+      if (f.type === 'num') return `<label class="field">${esc(f.label)}<input name="${f.k}" inputmode="decimal" value="${esc(eurPlain(v || 0))}"></label>`;
+      if (f.type === 'date') return `<label class="field">${esc(f.label)}<input type="date" name="${f.k}" value="${esc(v || '')}"></label>`;
+      return `<label class="field">${esc(f.label)}<input name="${f.k}" value="${esc(v || '')}"></label>`;
+    }).join('') + (item && !canDelete ? '<p class="hint">Não dá para apagar: está em uso.</p>' : ''),
     onSubmit: (fd) => {
-      const name = String(fd.get('name')).trim();
-      if (!name) return 'Escreve o nome do fundo.';
-      const data = { name, kind: fd.get('kind'), account: String(fd.get('account') || '').trim(), opening: fd.get('kind') === 'externo' ? 0 : r2(num(fd.get('opening'))), openingDate: fd.get('openingDate') || '' };
-      if (f) Object.assign(f, data); else S.funds.push({ id: uid('f'), ...data });
+      const d = {};
+      for (const f of fields) {
+        d[f.k] = f.type === 'num' ? r2(num(fd.get(f.k))) : String(fd.get(f.k) || '').trim();
+        if (f.req && !d[f.k]) return `Preenche "${f.label}".`;
+      }
+      onSave(d);
       return null;
     },
   });
-  if (f) {
-    const used = S.events.some((e) => e.components.some((c) => c.fundId === f.id)) || S.moves.some((m) => m.fundId === f.id || m.fromFundId === f.id || (m.allocs || []).some((a) => a.fundId === f.id));
-    if (used) { const b = $('#sheetDel'); b.disabled = true; b.textContent = 'Em uso'; }
-  }
+}
+
+const fundOptsArr = () => S.funds.map((f) => [f.id, f.name]);
+function lineForm(l) {
+  const used = l && (S.types.some((t) => t.comps.some((c) => c.lineId === l.id)) || S.tournaments.some((t) => t.comps.some((c) => c.lineId === l.id)) || S.moves.some((m) => m.lineId === l.id));
+  simpleForm({ title: l ? 'Linha do Excel' : 'Nova linha do Excel', item: l, canDelete: !used,
+    fields: [{ k: 'name', label: 'Nome (igual ao Excel)', req: true }, { k: 'section', label: 'Tabela', type: 'select', options: SECTIONS.map((s) => [s, s]), def: 'Income Estádios' }, { k: 'fundId', label: 'Conta para o saldo', type: 'select', options: fundOptsArr() }, { k: 'value', label: 'Valor base', type: 'num' }],
+    onSave: (d) => { if (l) Object.assign(l, d); else S.lines.push({ id: uid('l'), ...d }); },
+    onDelete: () => { S.lines = S.lines.filter((x) => x.id !== l.id); } });
+}
+function fundForm(f) {
+  const used = f && (S.lines.some((l) => l.fundId === f.id) || S.cats.some((c) => c.fundId === f.id));
+  simpleForm({ title: f ? 'Saldo' : 'Novo saldo', item: f, canDelete: !used,
+    fields: [{ k: 'name', label: 'Nome', req: true }, { k: 'accountId', label: 'Conta bancária', type: 'select', options: S.accounts.map((a) => [a.id, a.name]) }, { k: 'saldo', label: 'Saldo base no Excel', type: 'num' }],
+    onSave: (d) => { if (f) Object.assign(f, d); else S.funds.push({ id: uid('f'), ...d }); },
+    onDelete: () => { S.funds = S.funds.filter((x) => x.id !== f.id); } });
+}
+function accForm(a) {
+  const used = a && (S.funds.some((f) => f.accountId === a.id) || S.moves.some((m) => m.accountId === a.id || m.by === 'acc:' + a.id || m.recv === 'acc:' + a.id));
+  simpleForm({ title: a ? 'Conta bancária' : 'Nova conta', item: a, canDelete: !used,
+    fields: [{ k: 'name', label: 'Nome', req: true }, { k: 'opening', label: 'Saldo real no banco', type: 'num' }, { k: 'openingDate', label: 'Em', type: 'date', def: todayISO() }],
+    onSave: (d) => { if (a) Object.assign(a, d); else S.accounts.push({ id: uid('a'), ...d }); },
+    onDelete: () => { S.accounts = S.accounts.filter((x) => x.id !== a.id); } });
+  const h = document.createElement('p'); h.className = 'hint';
+  h.textContent = 'Quando atualizares o saldo real, muda também a data: só os depósitos e despesas depois dessa data devem ser somados. Se já estão registados na app, apaga-os ou ajusta o valor.';
+  $('.sheet-body').appendChild(h);
+}
+function catForm(c) {
+  const used = c && S.moves.some((m) => m.catId === c.id);
+  simpleForm({ title: c ? 'Categoria' : 'Nova categoria', item: c, canDelete: !used,
+    fields: [{ k: 'name', label: 'Nome (igual ao Excel)', req: true }, { k: 'fundId', label: 'Sai do saldo', type: 'select', options: fundOptsArr() }],
+    onSave: (d) => { if (c) Object.assign(c, d); else S.cats.push({ id: uid('c'), ...d }); },
+    onDelete: () => { S.cats = S.cats.filter((x) => x.id !== c.id); } });
+}
+function storeForm(s) {
+  const used = s && (S.types.some((t) => t.comps.some((c) => c.storeId === s.id)) || S.tournaments.some((t) => t.comps.some((c) => c.storeId === s.id)));
+  simpleForm({ title: s ? 'Loja' : 'Nova loja', item: s, canDelete: !used, fields: [{ k: 'name', label: 'Nome', req: true }],
+    onSave: (d) => { if (s) Object.assign(s, d); else S.stores.push({ id: uid('s'), ...d }); },
+    onDelete: () => { S.stores = S.stores.filter((x) => x.id !== s.id); } });
+}
+function typeForm(ty) {
+  const used = ty && S.tournaments.some((t) => t.typeId === ty.id);
+  const comps = ty ? ty.comps : [{ key: 'loja', label: 'Loja', price: 2, kind: 'loja', storeId: S.stores[0]?.id, def: true }, { key: 'main', label: 'Liga', price: 1, kind: 'line', lineId: S.lines[0]?.id, def: true }];
+  openSheet({
+    title: ty ? 'Tipo de torneio' : 'Novo tipo de torneio',
+    del: ty && !used ? () => { S.types = S.types.filter((x) => x.id !== ty.id); } : null,
+    body: `<label class="field">Nome<input name="name" value="${esc(ty?.name || '')}" placeholder="ex.: Liga Fénix Negra"></label>${compEditor(comps)}
+      <p class="hint">A Liga e a Semanal são exclusivas: um tipo de liga tem "Liga", um evento casual tem "Semanal estádios". A mensal fica marcada só para quem ainda não pagou nesse mês.</p>`,
+    onSubmit: (fd, form) => {
+      const name = String(fd.get('name')).trim();
+      if (!name) return 'Dá um nome ao tipo.';
+      const cs = readComps(fd, form, comps);
+      if (!cs.length) return 'Adiciona pelo menos uma parte.';
+      if (cs.some((c) => !c.label)) return 'Cada parte precisa de nome.';
+      if (ty) Object.assign(ty, { name, comps: cs }); else S.types.push({ id: uid('t'), name, comps: cs });
+      return null;
+    },
+  });
 }
 
 /* ---------- Render e eventos ---------- */
 function render() {
+  const active = document.activeElement;
+  const keep = active && active.id && $('#main').contains(active) ? { id: active.id, s: active.selectionStart } : null;
   const main = $('#main');
-  main.innerHTML = UI.tab === 'resumo' ? vResumo() : UI.tab === 'torneios' ? (UI.ev ? vEvent() : vEvents()) : UI.tab === 'movimentos' ? vMoves() : vMais();
+  main.innerHTML = UI.tab === 'resumo' ? vResumo() : UI.tab === 'torneios' ? (UI.tid ? vTour() : vTours()) : UI.tab === 'jogadores' ? vPlayers() : vMais();
   $$('.tabbar button').forEach((b) => b.setAttribute('aria-current', b.dataset.tab === UI.tab ? 'page' : 'false'));
   const ib = $('#installBtn'); if (ib && window.__installPrompt) ib.hidden = false;
+  if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { if (keep.s != null) el.setSelectionRange(keep.s, keep.s); } catch (e) { /* */ } } }
   saveUI();
+}
+
+function quickAction(t) {
+  const kind = t.dataset.kind, pid = t.dataset.pid, amt = num(t.dataset.amt), tid = t.dataset.tid || null;
+  if (kind === 'send') moveForm('envio', null, { tid, from: pid, to: S.settings.treasurerId, amount: amt });
+  else if (kind === 'deposit') moveForm('deposito', null, { tid, by: pid, accountId: t.dataset.acc, amount: amt });
+  else if (kind === 'refund') moveForm('reembolso', null, { tid, to: pid, amount: amt });
+  else if (kind === 'loja') moveForm('loja', null, { tid, by: pid, storeId: t.dataset.store, amount: amt });
 }
 
 function onClick(ev) {
   const t = ev.target.closest('[data-act]');
   if (!t) return;
-  const act = t.dataset.act;
-  const id = t.dataset.id;
+  const act = t.dataset.act, id = t.dataset.id;
+  const tour = tourById(UI.tid);
   switch (act) {
-    case 'tab': if (UI.tab === 'torneios' && t.dataset.tab === 'torneios') UI.ev = null; UI.tab = t.dataset.tab; render(); window.scrollTo(0, 0); break;
+    case 'tab': if (UI.tab === t.dataset.tab && UI.tab === 'torneios') UI.tid = null; UI.tab = t.dataset.tab; render(); window.scrollTo(0, 0); break;
     case 'close-sheet': closeSheet(); break;
-    case 'open-event': UI.ev = id; UI.evTab = 'inscricoes'; render(); window.scrollTo(0, 0); break;
-    case 'back': UI.ev = null; render(); break;
-    case 'ev-tab': UI.evTab = t.dataset.tab; render(); break;
-    case 'new-event': eventForm(null); break;
-    case 'edit-event': eventForm(eventById(id)); break;
-    case 'dup-event': eventForm(null, eventById(id)); break;
-    case 'add-comp': { const fd = S.funds[0]; $('#compList').insertAdjacentHTML('beforeend', compRow({ id: uid('c'), label: '', fundId: fd?.id, price: 0, excel: '', def: true })); break; }
+    case 'open-tour': UI.tid = id; UI.tTab = 'checkin'; UI.q = ''; render(); window.scrollTo(0, 0); break;
+    case 'open-excel': UI.tab = 'torneios'; UI.tid = id; UI.tTab = 'excel'; render(); window.scrollTo(0, 0); break;
+    case 'back': UI.tid = null; render(); break;
+    case 't-tab': UI.tTab = t.dataset.tab; render(); break;
+    case 'new-tour': tourForm(null); break;
+    case 'edit-tour': tourForm(tourById(id)); break;
+    case 'ci-add': addEntry(tour, id); break;
+    case 'ci-new': playerForm(null, UI.q.trim(), (pid) => { setTimeout(() => addEntry(tour, pid), 0); }); break;
+    case 'new-method': S.settings.newMethod = t.dataset.m; save(); render(); break;
+    case 'tog': {
+      const e = S.entries.find((x) => x.id === id); const tt = tourById(e.tid); const c = compOf(tt, t.dataset.key);
+      if (e.amt[c.key] != null) delete e.amt[c.key]; else e.amt[c.key] = c.price;
+      save(); render(); break;
+    }
+    case 'set-method': {
+      const e = S.entries.find((x) => x.id === id); const tt = tourById(e.tid);
+      const prev = e.method; e.method = t.dataset.m;
+      if (e.method === 'own') e.recv = e.playerId; else if (prev === 'own') e.recv = tt.organizerId;
+      save(); render(); break;
+    }
+    case 'ci-more': entrySheet(S.entries.find((x) => x.id === id)); break;
+    case 'new-move': moveForm(t.dataset.kind, null, { storeId: t.dataset.store || '', tid: t.dataset.general || UI.tab !== 'torneios' ? null : UI.tid }); break;
+    case 'edit-move': moveForm(null, S.moves.find((x) => x.id === id)); break;
+    case 'quick': quickAction(t); break;
+    case 'launch': launch(id, null, true); save(); render(); toast('Marcado como lançado no Excel'); break;
+    case 'unlaunch': launch(id, null, false); save(); render(); break;
+    case 'launch-move': launch(null, id, true); closeSheet(); save(); render(); toast('Marcado como lançado no Excel'); break;
+    case 'unlaunch-move': launch(null, id, false); closeSheet(); save(); render(); break;
+    case 'add-comp': { const k = uid('k'); $('#compList').insertAdjacentHTML('beforeend', compEditor.row({ key: k, label: '', price: 0, kind: 'line', lineId: S.lines[0]?.id, def: false })); break; }
     case 'rm-comp': t.closest('.comp-edit').remove(); break;
-    case 'new-entry': entryForm(eventById(UI.ev)); break;
-    case 'edit-entry': { const e = S.entries.find((x) => x.id === id); entryForm(eventById(e.eventId), e); break; }
-    case 'new-move': moveForm(t.dataset.type, null, { eventId: t.dataset.ev || null }); break;
-    case 'edit-move': { const m = S.moves.find((x) => x.id === id); moveForm(m.type, m); break; }
-    case 'quick-send': moveForm('transferencia', null, { from: t.dataset.pid, to: S.settings.treasurerId, amount: num(t.dataset.amt), eventId: t.dataset.ev || null }); break;
-    case 'quick-deposit': moveForm('deposito', null, { by: t.dataset.pid, allocs: suggestAllocs(num(t.dataset.amt)), eventId: t.dataset.ev || null }); break;
-    case 'quick-refund': moveForm('reembolso', null, { to: t.dataset.pid, amount: num(t.dataset.amt), fundId: S.funds.find((f) => f.kind !== 'externo')?.id, eventId: t.dataset.ev || null }); break;
-    case 'new-person': personForm(null); break;
-    case 'edit-person': personForm(personById(id)); break;
+    case 'new-player': playerForm(null, UI.pq.trim()); break;
+    case 'edit-player': playerForm(playerById(id)); break;
+    case 'new-type': typeForm(null); break;
+    case 'edit-type': typeForm(typeById(id)); break;
+    case 'new-line': lineForm(null); break;
+    case 'edit-line': lineForm(lineById(id)); break;
     case 'new-fund': fundForm(null); break;
     case 'edit-fund': fundForm(fundById(id)); break;
+    case 'new-acc': accForm(null); break;
+    case 'edit-acc': accForm(accById(id)); break;
+    case 'new-cat': catForm(null); break;
+    case 'edit-cat': catForm(catById(id)); break;
+    case 'new-store': storeForm(null); break;
+    case 'edit-store': storeForm(storeById(id)); break;
     case 'copy': copyText(t.dataset.text); break;
-    case 'export-csv-ins': exportFile(`inscricoes-${slug(eventById(id).name)}.csv`, csvInscricoes(id), 'text/csv;charset=utf-8'); break;
-    case 'export-csv-ev': exportFile(`lancamentos-${slug(eventById(id).name)}.csv`, csvLancamentos(id), 'text/csv;charset=utf-8'); break;
-    case 'export-json-ev': exportFile(`torneio-${slug(eventById(id).name)}.json`, JSON.stringify(exportBundle(id), null, 1), 'application/json'); break;
-    case 'export-csv-all': exportFile(`lancamentos-${todayISO()}.csv`, csvLancamentos(), 'text/csv;charset=utf-8'); break;
-    case 'export-json': exportFile(`caixa-bbpt-${todayISO()}.json`, JSON.stringify(exportBundle(), null, 1), 'application/json'); break;
-    case 'copy-json': copyText(JSON.stringify(exportBundle()), 'Cópia de segurança copiada'); break;
+    case 'exp-checkin': exportFile(`checkin-${slug(tourById(id).name)}.csv`, csvCheckin(id), 'text/csv;charset=utf-8'); break;
+    case 'exp-excel': exportFile(`excel-${slug(tourById(id).name)}.csv`, csvExcel(id), 'text/csv;charset=utf-8'); break;
+    case 'exp-tour': exportFile(`torneio-${slug(tourById(id).name)}.json`, JSON.stringify(exportBundle(id), null, 1), 'application/json'); break;
+    case 'exp-backup': exportFile(`caixa-bbpt-${todayISO()}.json`, JSON.stringify(exportBundle(), null, 1), 'application/json'); break;
+    case 'copy-backup': copyText(JSON.stringify(exportBundle()), 'Cópia de segurança copiada'); break;
     case 'import': doImport(t.dataset.mode, t); break;
-    case 'reset': {
-      if (!t.dataset.armed) { t.dataset.armed = '1'; const old = t.textContent; t.textContent = 'Toca outra vez para confirmar'; setTimeout(() => { if (t.isConnected) { delete t.dataset.armed; t.textContent = old; } }, 3500); break; }
-      S = t.dataset.mode === 'seed' ? seed() : emptyState(); UI.ev = null; save(); render(); toast(t.dataset.mode === 'seed' ? 'Dados da Semana 5 repostos' : 'Dados apagados');
-      break;
+    case 'add-example': addExample(); save(); render(); toast('Torneio de exemplo adicionado'); break;
+    case 'rm-example': {
+      const ids = S.tournaments.filter((x) => x.example).map((x) => x.id);
+      S.tournaments = S.tournaments.filter((x) => !x.example); S.entries = S.entries.filter((e) => !ids.includes(e.tid)); S.moves = S.moves.filter((m) => !ids.includes(m.tid));
+      if (ids.includes(UI.tid)) UI.tid = null; save(); render(); toast('Exemplo apagado'); break;
     }
+    case 'reset':
+      if (!t.dataset.armed) { t.dataset.armed = '1'; t.textContent = 'Toca outra vez: apaga torneios e movimentos'; setTimeout(() => { if (t.isConnected) { delete t.dataset.armed; t.textContent = 'Repor dados iniciais'; } }, 3500); break; }
+      S = seed(); UI.tid = null; save(); render(); toast('Dados iniciais repostos'); break;
     case 'install': if (window.__installPrompt) { window.__installPrompt.prompt(); window.__installPrompt = null; t.hidden = true; } break;
     default: break;
   }
 }
 
+function onInput(ev) {
+  const t = ev.target;
+  if (t.id === 'ciSearch') { UI.q = t.value; const r = $('#ciResults'); if (r) r.innerHTML = ciResults(tourById(UI.tid)); }
+  if (t.id === 'pSearch') { UI.pq = t.value; const q = UI.pq.trim().toLowerCase(); $('#pList').innerHTML = playerRows(S.players.filter((p) => !q || p.name.toLowerCase().includes(q)), monthKey(todayISO())); }
+}
+function onKey(ev) {
+  if (ev.key === 'Escape' && !$('#sheet').hidden) closeSheet();
+  if (ev.key === 'Enter' && ev.target.id === 'ciSearch') {
+    ev.preventDefault();
+    const first = $('.results .result');
+    if (first) first.click();
+  }
+}
 function onChange(ev) {
   const t = ev.target;
   if (t.id === 'treasurer') { S.settings.treasurerId = t.value; save(); render(); }
-  if (t.id === 'since') { UI.since = t.value; render(); }
-  if (t.id === 'csvPT') { S.settings.csvPT = t.checked; save(); }
+  if (t.id === 'withPlayers') { UI.withPlayers = t.checked; render(); }
 }
-
-const slug = (s) => String(s).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 
 async function doImport(mode, btn) {
   const file = $('#importFile')?.files?.[0];
   let text = $('#importText')?.value.trim();
   if (file) text = await file.text();
   if (!text) { toast('Escolhe um ficheiro ou cola o conteúdo primeiro.'); return; }
-  if (mode === 'replace' && !btn.dataset.armed) { btn.dataset.armed = '1'; btn.textContent = 'Toca outra vez para substituir'; setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = 'Substituir tudo'; } }, 3500); return; }
+  if (mode === 'replace' && !btn.dataset.armed) { btn.dataset.armed = '1'; btn.textContent = 'Toca outra vez para substituir tudo'; setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = 'Substituir tudo'; } }, 3500); return; }
   try {
-    const before = JSON.stringify(S);
     const r = importData(JSON.parse(text), mode);
-    if (mode === 'merge' && S.settings.seeded && before !== JSON.stringify(S)) S.settings.seeded = false;
     save(); render();
-    toast(`Importado: ${r.events} torneio(s), ${r.entries} inscrições, ${r.moves} movimentos`);
+    toast(`Importado: ${r.t} torneio(s), ${r.e} inscrições, ${r.m} movimentos`);
   } catch (e) {
     toast(e.message && e.message.includes('Caixa') ? e.message : 'O conteúdo não é um ficheiro válido da Caixa BBPT.');
   }
@@ -1294,13 +1814,13 @@ function boot() {
   S = load();
   loadUI();
   document.addEventListener('click', onClick);
+  document.addEventListener('input', onInput);
   document.addEventListener('change', onChange);
-  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#sheet').hidden) closeSheet(); });
+  document.addEventListener('keydown', onKey);
   window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.__installPrompt = e; const b = $('#installBtn'); if (b) b.hidden = false; });
   render();
-  if ('serviceWorker' in navigator && location.protocol === 'https:' && window.__PWA__) {
-    navigator.serviceWorker.register('./sw.js').catch(() => { /* sem modo offline */ });
-  }
+  if ('serviceWorker' in navigator && location.protocol === 'https:' && window.__PWA__) navigator.serviceWorker.register('./sw.js').catch(() => { /* sem modo offline */ });
+  if (!window.__PWA__ && window.claude && typeof window.claude.use === 'function') window.claude.use('downloads').then((d) => { DL = d; }).catch(() => { /* */ });
 }
 boot();
 
