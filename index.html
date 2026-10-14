@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Caixa BBPT">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/favicon.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3.4.0">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3.4.1">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400&display=swap">
 <style>
 :root { padding-top: env(safe-area-inset-top, 0px); }
@@ -403,12 +403,15 @@ p.verify.ok { color: var(--ok); } p.verify.bad { color: var(--bad); }
 .guide-sec h2 { color: var(--fg); }
 .guide-sec p, .g-list li, .g-steps li { max-width: 65ch; line-height: 1.5; }
 .g-list, .g-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+details.detail { display: flex; flex-direction: column; gap: 12px; }
+details.detail > summary { cursor: pointer; font-weight: 600; color: var(--accent); padding: 8px 0; list-style-position: inside; }
+details.detail[open] > summary { margin-bottom: 8px; }
 
 </style>
 </head>
 <body>
 <main id="main" aria-live="polite"></main><nav class="tabbar" aria-label="Navegação"><button data-act="tab" data-tab="torneios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15.9V18h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 13H8a4 4 0 0 1-4-4V6h3zm-1 4v1a2 2 0 0 0 1 1.7V8zm11 0v2.7A2 2 0 0 0 18 9V8z"/></svg><span>Torneios</span></button><button data-act="tab" data-tab="jogadores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-3.3 0-7 1.7-7 4v3h14v-3c0-2.3-3.7-4-7-4zm8-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm1 2h-.6A5.6 5.6 0 0 1 20 17v3h3v-3c0-2-2.5-3.6-5-4z"/></svg><span>Jogadores</span></button><button data-act="tab" data-tab="resumo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg><span>Resumo</span></button><button data-act="tab" data-tab="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Mais</span></button></nav><div id="sheet" hidden></div><div id="toast" role="status" hidden></div>
-<script>window.__PWA__ = true; window.__VERSION__ = '3.4.0';</script>
+<script>window.__PWA__ = true; window.__VERSION__ = '3.4.1';</script>
 <script>
 /* Caixa BBPT — lógica de contas (sem DOM). O check-in por jogador é a base de tudo. */
 'use strict';
@@ -1482,6 +1485,7 @@ async function reloadFromSheet() {
 'use strict';
 
 const GUIDE_CHANGES = [
+  ['3.4.1', 'No separador Sheets, o detalhe fica recolhido e os botões de copiar só aparecem no modo manual (sem ligação ou no exemplo).'],
   ['3.4.0', 'Guia dentro da app. Botão "Escrever no Sheets" visível a partir do check-in. Aviso quando a app não está ligada ao Google Sheets.'],
   ['3.3.1', 'O tesoureiro vê o plano completo de depósitos, incluindo o dinheiro que ainda vai receber de outros organizadores.'],
   ['3.3.0', 'Logo BBPT como ícone da app.'],
@@ -1522,7 +1526,7 @@ function vGuide() {
       <li><b>Check-in:</b> jogadores, partes pagas e método. No topo, os totais por método (MBWAY, Numerário, Próprio, Em dívida).</li>
       <li><b>Pagamentos:</b> loja, envios entre organizadores, depósitos, despesas, receitas extra, reembolsos; numerário que cada um deve ter na mão.</li>
       <li><b>Acertos:</b> avisos, o que cada um tem de fazer (os teus primeiro), quem pagou a outro organizador, a conta de cada pessoa linha a linha, e a verificação de que tudo bate.</li>
-      <li><b>Sheets:</b> o que vai ser escrito, o botão para escrever e o resultado. Mostra também o antes → depois de cada linha e saldo.</li>
+      <li><b>Sheets:</b> o que vai ser escrito, o botão <b>Escrever no Sheets</b> e o resultado. Em "Ver o detalhe" está o antes → depois de cada linha e saldo. Os botões "Copiar … (para colar à mão)" só aparecem sem ligação: copiam texto, não escrevem nada.</li>
       <li><b>Relatório:</b> mensagem para o Discord e CSV.</li>
     </ul>
     <h3 class="sub">Jogadores</h3>
@@ -2028,7 +2032,7 @@ function vSettle(t, C) {
 }
 
 /* --- Excel --- */
-function excelBlock(p) {
+function excelBlock(p, manual = true) {
   const tsvIncome = p.lines.map((l) => [l.section, l.name, eurPlain(l.after)].join('\t')).join('\n');
   const tsvExp = p.exp.map((x) => [x.desc, x.date, x.cat, x.note, eurPlain(x.value)].join('\t')).join('\n');
   const changed = p.lines.some((l) => l.changed);
@@ -2037,15 +2041,15 @@ function excelBlock(p) {
     ${p.lines.length ? `<ul class="xlist">${p.lines.map((l) => `<li${l.changed ? ' class="hl"' : ''}><div class="x-name">${esc(l.name)}<small class="muted">${esc(l.section)}</small></div>
       <div class="x-vals"><span class="muted">${eur(l.before)}</span><span class="pos">+${eur(l.delta)}</span><b>${eur(l.after)}</b></div>
       ${l.changed ? `<p class="x-fix">Já lançado: +${eur(l.was || 0)} · corrigir <b>${money(r2(l.delta - (l.was || 0)), true)}</b></p>` : ''}</li>`).join('')}</ul>
-    <button type="button" class="btn small" data-act="copy" data-text="${esc(tsvIncome)}">Copiar valores finais</button>` : '<p class="muted">Nada a somar.</p>'}
+    ${manual ? `<button type="button" class="btn small" data-act="copy" data-text="${esc(tsvIncome)}">Copiar valores (para colar à mão)</button>` : ''}` : '<p class="muted">Nada a somar.</p>'}
   </section>
   ${p.exp.length ? `<section class="block"><h2>Budget Geral · Despesas (linhas novas)</h2>
     <div class="tablewrap"><table class="data"><thead><tr><th>Descrição</th><th>Data</th><th>Categoria</th><th>Nota</th><th>Valor</th></tr></thead><tbody>
     ${p.exp.map((x) => `<tr><td>${esc(x.desc)}</td><td>${esc(x.date)}</td><td>${esc(x.cat)}</td><td>${esc(x.note)}</td><td>${eur(x.value)}</td></tr>`).join('')}
-    </tbody></table></div><button type="button" class="btn small" data-act="copy" data-text="${esc(tsvExp)}">Copiar linhas</button>
-    <p class="hint">Cola na primeira linha vazia da tabela Despesas: as colunas ficam no sítio.</p></section>` : ''}
+    </tbody></table></div>${manual ? `<button type="button" class="btn small" data-act="copy" data-text="${esc(tsvExp)}">Copiar linhas (para colar à mão)</button>
+    <p class="hint">Cola na primeira linha vazia da tabela Despesas: as colunas ficam no sítio.</p>` : ''}</section>` : ''}
   ${p.users.length || p.extras.length ? `<section class="block"><h2>Users/Estadios</h2>
-    ${p.users.length ? `<p>Na coluna <b>${esc(monthName(p.month))}</b>, marca ✓ em ${p.users.length} jogador(es):</p><ul class="namechips">${p.users.map((u) => `<li>${esc(u)}</li>`).join('')}</ul><button type="button" class="btn small" data-act="copy" data-text="${esc(p.users.join('\n'))}">Copiar nomes</button>` : ''}
+    ${p.users.length ? `<p>Na coluna <b>${esc(monthName(p.month))}</b>, marca ✓ em ${p.users.length} jogador(es):</p><ul class="namechips">${p.users.map((u) => `<li>${esc(u)}</li>`).join('')}</ul>${manual ? `<button type="button" class="btn small" data-act="copy" data-text="${esc(p.users.join('\n'))}">Copiar nomes (para colar à mão)</button>` : ''}` : ''}
     ${p.extras.length ? `<p>Em <b>Contribuição adicional</b>, soma:</p><ul class="kv">${p.extras.map((x) => `<li><span>${esc(x.name)}</span><span>+${eur(x.value)}</span></li>`).join('')}</ul>` : ''}
   </section>` : ''}
   <section class="block"><h2>Confirma os saldos</h2>
@@ -2084,12 +2088,12 @@ function vExcel(t) {
   if (linked() && !t.example) {
     return `${!ready ? `<p class="alert warn"><span class="dot"></span>Há ${C.debtN} jogador(es) em dívida. Quem está em dívida não é marcado; quando pagarem, escreve outra vez e a app junta só a diferença.</p>` : ''}
     ${sheetBox(t.id)}
-    ${excelBlock(p)}
+    <details class="detail"><summary>Ver o detalhe (antes → depois em cada linha e saldo)</summary>${excelBlock(p, false)}</details>
     <section class="block"><div class="bar wrap"><button type="button" class="btn" data-act="exp-excel" data-id="${t.id}">Exportar CSV</button></div></section>`;
   }
   return `
   ${!t.example && !LINK.url ? '<p class="banner">Com a app ligada ao Google Sheets (Mais › Google Sheets), aparece aqui o botão <b>Escrever no Sheets</b> e a app preenche o ficheiro por ti. Sem ligação, tens de copiar estes valores à mão.</p>' : ''}
-  ${t.example ? '<p class="banner">Exemplo: o Excel real já inclui a Semana 5. Não apliques estes valores.</p>' : ''}
+  ${t.example ? '<p class="banner"><b>Torneio de exemplo:</b> nunca é escrito no Sheets (o ficheiro real já tem a Semana 5). Os botões de copiar só copiam texto, servem para o modo manual.</p>' : ''}
   ${t.launched ? `<p class="note">Lançado no Excel em ${fmtDate(t.launched.date)}.</p>` : (!ready ? `<p class="alert warn"><span class="dot"></span>Há ${C.debtN} jogador(es) em dívida. Podes lançar já o que foi pago e voltar a lançar a diferença depois.</p>` : '')}
   ${excelBlock(p)}
   <section class="block"><div class="bar wrap">
