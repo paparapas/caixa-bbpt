@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Caixa BBPT">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/favicon.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3.3.1">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3.4.0">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400&display=swap">
 <style>
 :root { padding-top: env(safe-area-inset-top, 0px); }
@@ -390,11 +390,25 @@ p.verify.ok { color: var(--ok); } p.verify.bad { color: var(--bad); }
 .monthbar .mini-seg { align-self: flex-start; }
 .settle-act.info span { color: var(--muted); font-size: 0.9rem; }
 
+/* Guia e avisos */
+.unlinked { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--warn-bg); color: var(--fg); border-radius: 12px; padding: 10px 12px; font-size: 0.9rem; }
+.sheetnudge { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; background: var(--ok-bg); border-radius: 12px; padding: 10px 12px; font-size: 0.92rem; }
+.guidecard { width: 100%; text-align: left; font: inherit; color: inherit; background: var(--accent-soft); border: 0; border-radius: var(--radius); padding: 14px 44px 14px 16px; display: flex; flex-direction: column; gap: 3px; cursor: pointer; position: relative; }
+.guidecard b { font-family: var(--f-display); font-size: 1.3rem; }
+.guidecard span { color: var(--muted); font-size: 0.9rem; }
+.guidecard .arrow { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-size: 1.8rem; color: var(--accent); }
+.guide-toc { display: flex; flex-wrap: wrap; gap: 6px; }
+.guide-toc a { font-size: 0.85rem; font-weight: 600; color: var(--accent); background: var(--accent-soft); padding: 6px 10px; border-radius: 999px; text-decoration: none; }
+.guide-sec { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; scroll-margin-top: 12px; }
+.guide-sec h2 { color: var(--fg); }
+.guide-sec p, .g-list li, .g-steps li { max-width: 65ch; line-height: 1.5; }
+.g-list, .g-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; }
+
 </style>
 </head>
 <body>
 <main id="main" aria-live="polite"></main><nav class="tabbar" aria-label="Navegação"><button data-act="tab" data-tab="torneios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15.9V18h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 13H8a4 4 0 0 1-4-4V6h3zm-1 4v1a2 2 0 0 0 1 1.7V8zm11 0v2.7A2 2 0 0 0 18 9V8z"/></svg><span>Torneios</span></button><button data-act="tab" data-tab="jogadores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-3.3 0-7 1.7-7 4v3h14v-3c0-2.3-3.7-4-7-4zm8-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm1 2h-.6A5.6 5.6 0 0 1 20 17v3h3v-3c0-2-2.5-3.6-5-4z"/></svg><span>Jogadores</span></button><button data-act="tab" data-tab="resumo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg><span>Resumo</span></button><button data-act="tab" data-tab="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Mais</span></button></nav><div id="sheet" hidden></div><div id="toast" role="status" hidden></div>
-<script>window.__PWA__ = true; window.__VERSION__ = '3.3.1';</script>
+<script>window.__PWA__ = true; window.__VERSION__ = '3.4.0';</script>
 <script>
 /* Caixa BBPT — lógica de contas (sem DOM). O check-in por jogador é a base de tudo. */
 'use strict';
@@ -1464,6 +1478,106 @@ async function reloadFromSheet() {
   await syncNow({ sheet: true });
 }
 
+/* Caixa BBPT — guia dentro da app. Atualiza este ficheiro sempre que a app muda (e a secção Novidades). */
+'use strict';
+
+const GUIDE_CHANGES = [
+  ['3.4.0', 'Guia dentro da app. Botão "Escrever no Sheets" visível a partir do check-in. Aviso quando a app não está ligada ao Google Sheets.'],
+  ['3.3.1', 'O tesoureiro vê o plano completo de depósitos, incluindo o dinheiro que ainda vai receber de outros organizadores.'],
+  ['3.3.0', 'Logo BBPT como ícone da app.'],
+  ['3.2.0', 'Eventos especiais (fora das lojas) com linha própria em Income Misc. Jogadores: ver quem pagou a mensal em qualquer mês.'],
+  ['3.1.0', 'Chave pessoal por organizador: a app sabe quem és e mostra quem alterou o quê. Menu Mais revisto para o modo ligado.'],
+  ['3.0.0', 'Ligação ao Google Sheets: dados partilhados entre organizadores e escrita automática do check-in no ficheiro.'],
+];
+
+function vGuide() {
+  const sec = (id, title, body) => `<section class="block guide-sec" id="g-${id}"><h2>${title}</h2>${body}</section>`;
+  const toc = [['ideia', 'A ideia'], ['torneio', 'Um torneio do início ao fim'], ['ecras', 'O que há em cada ecrã'], ['dados', 'Onde ficam os dados e quem os vê'], ['manual', 'Quando mexer no Sheets à mão'], ['regras', 'Regras de ouro'], ['problemas', 'Problemas comuns'], ['novidades', 'Novidades']];
+  return `
+  <header class="top ev-top"><button type="button" class="link back" data-act="tab" data-tab="mais">‹ Mais</button>
+    <div class="ev-title"><p class="eyebrow">Versão ${esc(window.__VERSION__ || 'pré-visualização')}</p><h1>Guia da Caixa BBPT</h1></div></header>
+  <nav class="guide-toc" aria-label="Índice">${toc.map(([id, t]) => `<a href="#g-${id}" data-act="guide-go" data-id="${id}">${t}</a>`).join('')}</nav>
+
+  ${sec('ideia', 'A ideia', `
+    <p>A app faz o check-in de cada torneio jogador a jogador e trata das contas entre organizadores. O Google Sheets continua a ser o registo oficial: a app escreve lá por ti, só onde deve, e confirma que os saldos batem.</p>
+    <ul class="g-list">
+      <li><b>Guardar é automático.</b> Tudo o que fazes na app (check-in, pagamentos, envios) é guardado e partilhado com os outros organizadores sozinho, em segundos. A bolinha verde "Google Sheets · agora" no topo diz que está sincronizado.</li>
+      <li><b>Escrever no Sheets é um botão.</b> Passar o torneio para as abas do ficheiro (caixas da semana, mês, Despesas) só acontece quando carregas em <b>Escrever no Sheets</b>. Assim decides quando o check-in está fechado.</li>
+    </ul>`)}
+
+  ${sec('torneio', 'Um torneio do início ao fim', `
+    <ol class="g-steps">
+      <li><b>Criar.</b> Torneios › <b>Novo torneio</b>. Escolhe o tipo, a data e quem organiza. A app sugere a aba e a semana do Sheets (ex.: Liga Fénix Negra - Season 2 · Semana 6). Num <b>Evento especial</b> escreves o nome da linha em Income Misc.</li>
+      <li><b>Check-in.</b> Escreve o nome e toca no jogador. Entra com loja e liga marcadas; a mensal só vem marcada se ainda não pagou esse mês. Escolhe <b>MBWAY</b>, <b>Numerário</b>, <b>Próprio</b> (organizador que paga a sua parte, sem movimento) ou <b>Em dívida</b>. No <b>⋯</b> mudas valores ou indicas que pagou ao organizador errado.</li>
+      <li><b>Pagar a loja.</b> Pagamentos › <b>Registar pagamento à loja</b>. O valor vem preenchido e a app diz quanto numerário tens. Indica quanto saiu do numerário e quanto do teu bolso.</li>
+      <li><b>Acertos.</b> Diz a cada um o que fazer: "Enviar 10 € a paparapas", "Depositar 26 € em BBPT Liga". Quando fizeres, carrega em <b>Registar</b>.</li>
+      <li><b>Escrever no Sheets.</b> Separador <b>Sheets</b> do torneio (ou o aviso verde no topo do check-in) › <b>Escrever no Sheets</b> › toca outra vez para confirmar. A app relê o ficheiro e mostra ✓ ou ✗ em cada saldo.</li>
+      <li><b>Depois.</b> Se alguém em dívida pagar ou mudares algo, o aviso volta a aparecer: escreve outra vez e vai só a diferença.</li>
+      <li><b>Discord.</b> Separador Relatório › <b>Copiar mensagem</b>.</li>
+    </ol>`)}
+
+  ${sec('ecras', 'O que há em cada ecrã', `
+    <h3 class="sub">Torneios</h3>
+    <ul class="g-list">
+      <li><b>Check-in:</b> jogadores, partes pagas e método. No topo, os totais por método (MBWAY, Numerário, Próprio, Em dívida).</li>
+      <li><b>Pagamentos:</b> loja, envios entre organizadores, depósitos, despesas, receitas extra, reembolsos; numerário que cada um deve ter na mão.</li>
+      <li><b>Acertos:</b> avisos, o que cada um tem de fazer (os teus primeiro), quem pagou a outro organizador, a conta de cada pessoa linha a linha, e a verificação de que tudo bate.</li>
+      <li><b>Sheets:</b> o que vai ser escrito, o botão para escrever e o resultado. Mostra também o antes → depois de cada linha e saldo.</li>
+      <li><b>Relatório:</b> mensagem para o Discord e CSV.</li>
+    </ul>
+    <h3 class="sub">Jogadores</h3>
+    <p>Com <b>‹ mês ›</b> vês quem pagou a mensal de estádios em qualquer mês, com filtros Pagaram / Não pagaram. Ao tocar num jogador vês os 12 meses e os torneios em que jogou. Jogadores novos criados na app vão para a USER LIST quando escreveres um torneio onde joguem.</p>
+    <h3 class="sub">Resumo</h3>
+    <p>Saldos lidos do Sheets, torneios por escrever, acertos de todos os torneios, e contas bancárias: banco + dinheiro com pessoas deve dar o Excel; o que sobrar fica "por explicar".</p>
+    <h3 class="sub">Mais</h3>
+    <ul class="g-list">
+      <li><b>Google Sheets:</b> ligação, com quem estás ligado, link para os teus outros aparelhos.</li>
+      <li><b>Tesoureiro</b> e <b>Movimentos gerais</b> (despesas e receitas que não são de um torneio).</li>
+      <li><b>Tipos de torneio:</b> preços, aba do Sheets e linha de cada parte.</li>
+      <li><b>Budget Geral:</b> a que saldo pertence cada linha e categoria (os valores vêm do Sheets).</li>
+      <li><b>Contas e lojas:</b> saldo real do banco (atualiza quando vires o banco) e lojas.</li>
+      <li><b>Dados:</b> cópia de segurança e "voltar a descarregar tudo do Sheets".</li>
+    </ul>`)}
+
+  ${sec('dados', 'Onde ficam os dados e quem os vê', `
+    <ul class="g-list">
+      <li><b>Com o Google Sheets ligado</b>, nada importante fica só num telemóvel. Torneios, check-in, pagamentos, envios, depósitos, saldo do banco, tipos e configurações ficam guardados no ficheiro, numa aba escondida chamada <b>App Caixa</b>, e todos os organizadores veem o mesmo.</li>
+      <li>Só ficam no telemóvel coisas pessoais: a tua chave, o torneio de exemplo e preferências de ecrã.</li>
+      <li><b>Sem ligação</b>, tudo fica só nesse telemóvel. A app avisa no topo com uma faixa amarela. Liga sempre antes de usar a sério.</li>
+      <li><b>Quem vê o quê:</b> organizadores (cada um com a sua chave) veem e alteram tudo. Quem tem a chave de leitura vê tudo, incluindo quem pagou por MBWAY ou ficou em dívida, mas não altera nada. Quem tem acesso ao ficheiro Google pode mostrar a aba App Caixa, mas o conteúdo é técnico (não é para editar à mão).</li>
+    </ul>`)}
+
+  ${sec('manual', 'Quando mexer no Sheets à mão', `
+    <ol class="g-steps">
+      <li><b>Season nova.</b> Cria a aba (copia a anterior), acrescenta no Budget Geral a linha que soma essa aba, e em Mais › Tipos de torneio escolhe a aba nova.</li>
+      <li><b>Mais de 13 semanas numa aba.</b> Acrescenta as colunas loja + liga e alarga as fórmulas de totais.</li>
+      <li><b>Tabelas cheias.</b> Despesas, Income Misc ou USER LIST sem linhas livres: a app avisa e não escreve. Insere linhas <b>dentro</b> da tabela, antes do Total.</li>
+      <li><b>Mudar o nome de um jogador:</b> na USER LIST.</li>
+      <li><b>Corrigir algo já escrito</b> que a app não desfaz: despesa apagada ou mudada depois de escrita, ou torneio que mudou de semana. A app avisa nestes casos.</li>
+      <li><b>Receitas para linhas com fórmula</b> (ex.: lançar uma doação diretamente em "Doações"). A app avisa que tem de ser à mão.</li>
+      <li><b>Ano novo:</b> copia o ficheiro, cola o script com as chaves e liga a app ao novo link.</li>
+    </ol>`)}
+
+  ${sec('regras', 'Regras de ouro', `
+    <ul class="g-list">
+      <li>Torneio registado na app <b>não se marca à mão</b> no Sheets. Senão conta duas vezes.</li>
+      <li>Fecha o check-in e escreve no Sheets no próprio dia. Se houver ✗ depois de escrever, vê o que não bate antes de continuar.</li>
+      <li>Cada organizador usa só a sua chave. Não partilhes o teu link de ligação.</li>
+      <li>Quem está em dívida não é marcado no Sheets até pagar.</li>
+    </ul>`)}
+
+  ${sec('problemas', 'Problemas comuns', `
+    <ul class="g-list">
+      <li><b>Não vejo "Escrever no Sheets".</b> A app não está ligada (faixa amarela no topo): liga em Mais › Google Sheets. Se está ligada e diz "✓ O Sheets já tem tudo", não há nada por escrever.</li>
+      <li><b>"Chave errada".</b> Confirma a chave e que publicaste uma versão nova do script depois de a mudares.</li>
+      <li><b>Não vejo a versão nova.</b> Fecha a app por completo e abre outra vez. A versão aparece no fim de Mais.</li>
+      <li><b>"Sem ligação".</b> Continua a usar: fica guardado e segue quando houver rede.</li>
+    </ul>`)}
+
+  ${sec('novidades', 'Novidades', `<ul class="g-list">${GUIDE_CHANGES.map(([v, t]) => `<li><b>${esc(v)}</b> · ${esc(t)}</li>`).join('')}</ul>`)}
+  `;
+}
+
 /* Caixa BBPT — interface */
 'use strict';
 
@@ -1614,7 +1728,7 @@ function tourStatus(t) {
 function vTours() {
   const ts = S.tournaments.slice().sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   return `
-  <header class="top"><div><p class="eyebrow">${meName() ? `Olá, ${esc(meName())}` : 'Check-in e contas'}</p><h1>Torneios</h1></div><div class="top-side">${syncChip()}<button type="button" class="btn primary editonly" data-act="new-tour">Novo torneio</button></div></header>
+  <header class="top"><div><p class="eyebrow">${meName() ? `Olá, ${esc(meName())}` : 'Check-in e contas'}</p><h1>Torneios</h1></div><div class="top-side">${syncChip()}<button type="button" class="btn ghost small" data-act="tab" data-tab="guia">Guia</button><button type="button" class="btn primary editonly" data-act="new-tour">Novo torneio</button></div></header>
   ${readOnly() ? '<p class="banner">Estás em modo de leitura: vês tudo o que os organizadores registam, mas não podes alterar.</p>' : ''}
   ${ts.length ? `<ul class="cards">${ts.map((t) => {
     const C = compute(t.id);
@@ -1632,7 +1746,7 @@ function vTour() {
   const t = tourById(UI.tid);
   if (!t) { UI.tid = null; return vTours(); }
   const C = compute(t.id);
-  const tabs = [['checkin', 'Check-in'], ['pagamentos', 'Pagamentos'], ['acertos', 'Acertos'], ['excel', 'Excel'], ['relatorio', 'Relatório']];
+  const tabs = [['checkin', 'Check-in'], ['pagamentos', 'Pagamentos'], ['acertos', 'Acertos'], ['excel', linked() ? 'Sheets' : 'Excel'], ['relatorio', 'Relatório']];
   const body = { checkin: vCheckin, pagamentos: vPayments, acertos: vSettle, excel: vExcel, relatorio: vReport }[UI.tTab] || vCheckin;
   return `
   <header class="top ev-top">
@@ -1652,6 +1766,11 @@ function vTour() {
   </section>
   <p class="compline">${Object.entries(C.byComp).filter(([, v]) => v).map(([k, v]) => `<span>${esc(k)} <b>${eur(v)}</b></span>`).join('') || '<span class="muted">Ainda sem valores.</span>'}</p>
   <nav class="seg" aria-label="Secções do torneio">${tabs.map(([k, l]) => `<button data-act="t-tab" data-tab="${k}" aria-pressed="${UI.tTab === k}">${l}</button>`).join('')}</nav>
+  ${(() => {
+    if (!linked() || readOnly() || t.example || UI.tTab === 'excel' || !S.entries.some((e) => e.tid === t.id)) return '';
+    const n = sheetPayload(t.id).summary.length;
+    return n ? `<div class="sheetnudge"><span><b>Por escrever no Sheets</b> · ${n} alteração(ões)</span><button type="button" class="btn small primary" data-act="t-tab" data-tab="excel">Ver e escrever</button></div>` : '';
+  })()}
   ${body(t, C)}`;
 }
 
@@ -1969,6 +2088,7 @@ function vExcel(t) {
     <section class="block"><div class="bar wrap"><button type="button" class="btn" data-act="exp-excel" data-id="${t.id}">Exportar CSV</button></div></section>`;
   }
   return `
+  ${!t.example && !LINK.url ? '<p class="banner">Com a app ligada ao Google Sheets (Mais › Google Sheets), aparece aqui o botão <b>Escrever no Sheets</b> e a app preenche o ficheiro por ti. Sem ligação, tens de copiar estes valores à mão.</p>' : ''}
   ${t.example ? '<p class="banner">Exemplo: o Excel real já inclui a Semana 5. Não apliques estes valores.</p>' : ''}
   ${t.launched ? `<p class="note">Lançado no Excel em ${fmtDate(t.launched.date)}.</p>` : (!ready ? `<p class="alert warn"><span class="dot"></span>Há ${C.debtN} jogador(es) em dívida. Podes lançar já o que foi pago e voltar a lançar a diferença depois.</p>` : '')}
   ${excelBlock(p)}
@@ -2185,6 +2305,7 @@ function vMais() {
   const pendingLines = S.lines.filter((l) => L && l.missing);
   return `
   <header class="top"><div><p class="eyebrow">Definições</p><h1>Mais</h1></div>${syncChip()}</header>
+  <button type="button" class="guidecard" data-act="tab" data-tab="guia"><b>Guia da app</b><span>Como fazer um torneio, onde ficam os dados, quando mexer no Sheets à mão, novidades da versão ${esc(window.__VERSION__ || '')}</span><span class="arrow" aria-hidden="true">›</span></button>
 
   <section class="block linkbox"><h2>Google Sheets</h2>
     <div id="linkStatus">${linkStatusHTML()}</div>
@@ -2364,8 +2485,9 @@ function render() {
   const active = document.activeElement;
   const keep = active && active.id && $('#main').contains(active) ? { id: active.id, s: active.selectionStart } : null;
   const main = $('#main');
-  main.innerHTML = UI.tab === 'resumo' ? vResumo() : UI.tab === 'torneios' ? (UI.tid ? vTour() : vTours()) : UI.tab === 'jogadores' ? vPlayers() : vMais();
-  $$('.tabbar button').forEach((b) => b.setAttribute('aria-current', b.dataset.tab === UI.tab ? 'page' : 'false'));
+  main.innerHTML = (UI.tab === 'resumo' ? vResumo() : UI.tab === 'torneios' ? (UI.tid ? vTour() : vTours()) : UI.tab === 'jogadores' ? vPlayers() : UI.tab === 'guia' ? vGuide() : vMais());
+  if (!LINK.url && UI.tab !== 'mais' && UI.tab !== 'guia') main.insertAdjacentHTML('afterbegin', `<p class="unlinked"><span>Sem ligação ao Google Sheets: os dados ficam só neste telemóvel.</span><button type="button" class="btn small" data-act="tab" data-tab="mais">Ligar</button></p>`);
+  $$('.tabbar button').forEach((b) => b.setAttribute('aria-current', b.dataset.tab === (UI.tab === 'guia' ? 'mais' : UI.tab) ? 'page' : 'false'));
   document.body.classList.toggle('readonly', readOnly());
   const ib = $('#installBtn'); if (ib && window.__installPrompt) ib.hidden = false;
   if (keep) { const el = document.getElementById(keep.id); if (el) { el.focus(); try { if (keep.s != null) el.setSelectionRange(keep.s, keep.s); } catch (e) { /* */ } } }
@@ -2385,10 +2507,11 @@ function onClick(ev) {
   if (!t) return;
   const act = t.dataset.act, id = t.dataset.id;
   const tour = tourById(UI.tid);
-  const SAFE = ['tab', 'close-sheet', 'open-tour', 'open-excel', 'back', 't-tab', 'copy', 'exp-checkin', 'exp-excel', 'exp-tour', 'exp-backup', 'copy-backup', 'install', 'sync-now', 'link-on', 'link-off', 'link-share', 'reload-sheet', 'pm', 'pf', 'edit-player'];
+  const SAFE = ['tab', 'close-sheet', 'open-tour', 'open-excel', 'back', 't-tab', 'copy', 'exp-checkin', 'exp-excel', 'exp-tour', 'exp-backup', 'copy-backup', 'install', 'sync-now', 'link-on', 'link-off', 'link-share', 'reload-sheet', 'pm', 'pf', 'edit-player', 'guide-go'];
   if (readOnly() && !SAFE.includes(act)) { toast('Modo de leitura: só os organizadores podem alterar.'); return; }
   switch (act) {
     case 'sync-now': syncNow({ sheet: true }); break;
+    case 'guide-go': ev.preventDefault(); document.getElementById('g-' + id)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); break;
     case 'pm': {
       const cur = UI.pm || monthKey(todayISO());
       const d = +t.dataset.d;
@@ -2426,7 +2549,7 @@ function onClick(ev) {
         .catch((e) => { toast(e.message.includes('fetch') ? 'Sem ligação. Tenta outra vez quando houver rede.' : e.message); if (t.isConnected) { t.disabled = false; t.textContent = 'Escrever no Sheets'; } });
       break;
     }
-    case 'tab': if (UI.tab === t.dataset.tab && UI.tab === 'torneios') UI.tid = null; UI.tab = t.dataset.tab; render(); window.scrollTo(0, 0); break;
+    case 'tab': ev.preventDefault(); if (UI.tab === t.dataset.tab && UI.tab === 'torneios') UI.tid = null; UI.tab = t.dataset.tab; render(); window.scrollTo(0, 0); break;
     case 'close-sheet': closeSheet(); break;
     case 'open-tour': UI.tid = id; UI.tTab = 'checkin'; UI.q = ''; render(); window.scrollTo(0, 0); break;
     case 'open-excel': UI.tab = 'torneios'; UI.tid = id; UI.tTab = 'excel'; render(); window.scrollTo(0, 0); break;
