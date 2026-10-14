@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Caixa BBPT">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/favicon.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3.4.1">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3.5.0">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400&display=swap">
 <style>
 :root { padding-top: env(safe-area-inset-top, 0px); }
@@ -411,7 +411,7 @@ details.detail[open] > summary { margin-bottom: 8px; }
 </head>
 <body>
 <main id="main" aria-live="polite"></main><nav class="tabbar" aria-label="Navegação"><button data-act="tab" data-tab="torneios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15.9V18h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 13H8a4 4 0 0 1-4-4V6h3zm-1 4v1a2 2 0 0 0 1 1.7V8zm11 0v2.7A2 2 0 0 0 18 9V8z"/></svg><span>Torneios</span></button><button data-act="tab" data-tab="jogadores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-3.3 0-7 1.7-7 4v3h14v-3c0-2.3-3.7-4-7-4zm8-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm1 2h-.6A5.6 5.6 0 0 1 20 17v3h3v-3c0-2-2.5-3.6-5-4z"/></svg><span>Jogadores</span></button><button data-act="tab" data-tab="resumo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg><span>Resumo</span></button><button data-act="tab" data-tab="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Mais</span></button></nav><div id="sheet" hidden></div><div id="toast" role="status" hidden></div>
-<script>window.__PWA__ = true; window.__VERSION__ = '3.4.1';</script>
+<script>window.__PWA__ = true; window.__VERSION__ = '3.5.0';</script>
 <script>
 /* Caixa BBPT — lógica de contas (sem DOM). O check-in por jogador é a base de tudo. */
 'use strict';
@@ -1135,9 +1135,10 @@ function sheetSlot(c) {
 }
 
 /* O estado que o Sheets deve ter para este torneio */
-function desiredSheet(tid) {
+function desiredSheet(tid, empty) {
   const t = tourById(tid);
-  const d = { tab: t.sheetTab, week: t.sheetWeek, ticks: {}, months: {}, extras: {}, despesas: [], lines: {} };
+  const d = { tab: t.sheetTab, week: t.sheetWeek, ticks: {}, months: {}, extras: {}, despesas: [], despesaRows: {}, lines: {} };
+  if (empty) return d;
   const noTab = !t.sheetTab;
   S.entries.filter((e) => e.tid === tid && e.method !== 'debt').forEach((e) => {
     const name = pn(e.playerId);
@@ -1156,30 +1157,63 @@ function desiredSheet(tid) {
     });
   });
   S.moves.filter((m) => m.tid === tid).forEach((m) => {
-    if (m.kind === 'despesa') d.despesas.push(m.id);
+    if (m.kind === 'despesa') { d.despesas.push(m.id); d.despesaRows[m.id] = despesaRow(m); }
     if (m.kind === 'receita') d.lines[lineById(m.lineId)?.name] = r2((d.lines[lineById(m.lineId)?.name] || 0) + r2(m.amount));
   });
   return d;
 }
 
-/* Pedido para o script: só a diferença entre o que já foi escrito e o que deve estar */
-function sheetPayload(tid, moveId) {
+const sameRow = (a, b) => a && b && a.desc === b.desc && a.date === b.date && a.cat === b.cat && a.note === b.note && r2(a.value) === r2(b.value);
+
+/* Despesas: novas entram, apagadas saem, mudadas saem e voltam a entrar */
+function despesaDiff(want, was, req, manual) {
+  (want.despesas || []).forEach((id) => {
+    const row = want.despesaRows[id];
+    const old = was.despesaRows?.[id];
+    if (!(was.despesas || []).includes(id)) req.despesas.push(row);
+    else if (old && !sameRow(old, row)) { req.removeDespesas.push(old); req.despesas.push(row); }
+  });
+  (was.despesas || []).forEach((id) => {
+    if ((want.despesas || []).includes(id)) return;
+    const old = was.despesaRows?.[id];
+    if (old) req.removeDespesas.push(old);
+    else manual.push('Uma despesa já escrita no Sheets foi apagada na app. Retira-a à mão na tabela Despesas.');
+  });
+}
+
+/* Pedido para o script: só a diferença entre o que já foi escrito e o que deve estar.
+   opts.empty = desfazer tudo o que a app escreveu (antes de apagar). */
+function sheetPayload(tid, moveId, opts = {}) {
   if (moveId) {
     const m = S.moves.find((x) => x.id === moveId);
     const was = m.launched?.wrote || {};
-    const req = { despesas: [], lines: [] };
-    if (m.kind === 'despesa' && !(was.despesas || []).includes(m.id)) req.despesas.push(despesaRow(m));
-    if (m.kind === 'receita') { const name = lineById(m.lineId)?.name; const add = r2(r2(m.amount) - (was.lines?.[name] || 0)); if (add) req.lines.push({ name, add }); }
-    const want = { despesas: m.kind === 'despesa' ? [m.id] : [], lines: m.kind === 'receita' ? { [lineById(m.lineId)?.name]: r2(m.amount) } : {} };
-    return { req, want, summary: sheetSummary(req), manual: [] };
+    const req = { despesas: [], removeDespesas: [], lines: [] };
+    const want = { despesas: [], despesaRows: {}, lines: {} };
+    if (!opts.empty) {
+      if (m.kind === 'despesa') { want.despesas = [m.id]; want.despesaRows[m.id] = despesaRow(m); }
+      if (m.kind === 'receita') want.lines[lineById(m.lineId)?.name] = r2(m.amount);
+    }
+    const manual = [];
+    despesaDiff(want, was, req, manual);
+    new Set([...Object.keys(want.lines), ...Object.keys(was.lines || {})]).forEach((n) => {
+      const add = r2((want.lines[n] || 0) - (was.lines?.[n] || 0));
+      if (add) req.lines.push({ name: n, add, section: S.lines.find((l) => normName(l.name) === normName(n))?.section || '' });
+    });
+    return { req, want, summary: sheetSummary(req), manual };
   }
   const t = tourById(tid);
-  const want = desiredSheet(tid);
+  const want = desiredSheet(tid, opts.empty);
   const was = t.launched?.wrote || { ticks: {}, months: {}, extras: {}, despesas: [], lines: {} };
-  const req = { addPlayers: [], comp: null, month: null, extras: [], despesas: [], lines: [] };
+  const req = { addPlayers: [], comps: [], month: null, extras: [], despesas: [], removeDespesas: [], lines: [] };
   const manual = [];
-  const sameWeek = !t.launched?.wrote || (was.tab === want.tab && was.week === want.week);
-  if (!sameWeek) manual.push(`Este torneio já foi escrito em ${was.tab} · ${was.week}. Desmarca essa semana à mão ou volta a pôr a mesma semana.`);
+  const written = !!t.launched?.wrote;
+  const sameWeek = !written || (was.tab === want.tab && was.week === want.week);
+  const dateLabel = fmtDate(t.date).replace(/\/(\d{2})(\d{2})$/, '/$2');
+  // Semana mudou (ou deixou de ter aba): desmarca tudo na semana antiga
+  if (!sameWeek && was.tab && was.week) {
+    const off = Object.entries(was.ticks || {}).map(([n, b]) => ({ name: n, loja: b.loja ? false : null, liga: b.liga ? false : null })).filter((x) => x.loja !== null || x.liga !== null);
+    if (off.length) req.comps.push({ tab: was.tab, week: was.week, set: off });
+  }
   const names = new Set([...Object.keys(want.ticks), ...(sameWeek ? Object.keys(was.ticks || {}) : [])]);
   const set = [];
   names.forEach((n) => {
@@ -1190,7 +1224,7 @@ function sheetPayload(tid, moveId) {
   });
   if (set.length) {
     if (!want.tab || !want.week) manual.push('Escolhe a aba e a semana do Sheets em Editar torneio.');
-    else req.comp = { tab: want.tab, week: want.week, dateLabel: fmtDate(t.date).replace(/\/(\d{2})(\d{2})$/, '/$2'), set };
+    else req.comps.push({ tab: want.tab, week: want.week, dateLabel, set });
   }
   const mset = [];
   new Set([...Object.keys(want.months), ...Object.keys(was.months || {})]).forEach((n) => {
@@ -1205,12 +1239,19 @@ function sheetPayload(tid, moveId) {
     const add = r2((want.lines[n] || 0) - (was.lines?.[n] || 0));
     if (add) req.lines.push({ name: n, add, section: S.lines.find((l) => normName(l.name) === normName(n))?.section || '' });
   });
-  want.despesas.forEach((id) => { if (!(was.despesas || []).includes(id)) req.despesas.push(despesaRow(S.moves.find((m) => m.id === id))); });
-  (was.despesas || []).forEach((id) => { if (!want.despesas.includes(id)) manual.push('Uma despesa já escrita no Sheets foi apagada ou mudada na app. Corrige-a à mão na tabela Despesas.'); });
+  despesaDiff(want, was, req, manual);
   const playersNeeded = new Set([...Object.keys(want.ticks), ...Object.keys(want.months), ...Object.keys(want.extras)]);
   const inSheet = new Set((S.sheet?.players || []).map((x) => normName(x.name)));
   playersNeeded.forEach((n) => { if (S.sheet && !inSheet.has(normName(n))) req.addPlayers.push(n); });
   return { req, want, summary: sheetSummary(req), manual };
+}
+
+/* Há algo deste torneio/movimento no Sheets que tem de ser desfeito antes de apagar? */
+function needsUndo(tid, moveId) {
+  if (!S.sheet) return false;
+  const item = tid ? tourById(tid) : S.moves.find((m) => m.id === moveId);
+  if (!item?.launched?.wrote || item.launched.by !== 'sheet') return false;
+  return sheetPayload(tid, moveId, { empty: true }).summary.length > 0;
 }
 
 function despesaRow(m) {
@@ -1220,16 +1261,20 @@ function despesaRow(m) {
 function sheetSummary(req) {
   const L = [];
   if (req.addPlayers?.length) L.push(`Adicionar à USER LIST: ${req.addPlayers.join(', ')}`);
-  if (req.comp) {
-    const on = (k) => req.comp.set.filter((x) => x[k] === true).length, off = (k) => req.comp.set.filter((x) => x[k] === false).length;
-    L.push(`${req.comp.tab} · ${req.comp.week.replace(/^./, (c) => c.toUpperCase())}: marcar loja ${on('loja')} e liga ${on('liga')}` + (off('loja') + off('liga') ? `, desmarcar ${off('loja') + off('liga')}` : ''));
-  }
+  (req.comps || (req.comp ? [req.comp] : [])).forEach((c) => {
+    const on = (k) => c.set.filter((x) => x[k] === true).length, off = (k) => c.set.filter((x) => x[k] === false).length;
+    const parts = [];
+    if (on('loja') + on('liga')) parts.push(`marcar loja ${on('loja')} e liga ${on('liga')}`);
+    if (off('loja') + off('liga')) parts.push(`desmarcar ${off('loja') + off('liga')} caixa(s)`);
+    L.push(`${c.tab} · ${c.week.replace(/^./, (x) => x.toUpperCase())}: ${parts.join(', ')}`);
+  });
   if (req.month) {
     const on = req.month.set.filter((x) => x.value).length, off = req.month.set.length - on;
-    L.push(`Users/Estadios · ${MONTHS[req.month.m - 1]}: marcar ${on}` + (off ? `, desmarcar ${off}` : ''));
+    L.push(`Users/Estadios · ${MONTHS[req.month.m - 1]}: ${[on && `marcar ${on}`, off && `desmarcar ${off}`].filter(Boolean).join(', ')}`);
   }
   (req.extras || []).forEach((x) => L.push(`Contribuição adicional de ${x.name}: ${x.add > 0 ? '+' : ''}${eur(x.add)}`));
   (req.lines || []).forEach((x) => { const isNew = S.sheet && !(S.sheet.budget?.lines || []).some((l) => normName(l.name) === normName(x.name)); L.push(`${isNew ? `Criar a linha "${x.name}" em ${x.section || 'Income Misc'} com` : `${x.name}:`} ${x.add > 0 ? '+' : ''}${eur(x.add)}`); });
+  (req.removeDespesas || []).forEach((x) => L.push(`Retirar despesa: ${x.desc} · ${eur(x.value)}`));
   (req.despesas || []).forEach((x) => L.push(`Despesa nova: ${x.desc} · ${eur(x.value)}`));
   return L;
 }
@@ -1280,7 +1325,7 @@ function applyRecords(list) {
 }
 
 if (typeof module !== 'undefined') {
-  module.exports = { settlePeople, ESPECIAL, migrate, mergeSheet, sheetPayload, desiredSheet, markWritten, buildRecords, applyRecords, suggestWeek, excelDeltas, seed, emptyState, setState, getState: () => S, compute, actionsFor, alertsFor, excelPlan, excelCurrent, pendingLaunch, launch, bankView, discordReport, csvCheckin, csvExcel, exportBundle, importData, defaultAmounts, monthlyPaidElsewhere, addExample };
+  module.exports = { needsUndo, settlePeople, ESPECIAL, migrate, mergeSheet, sheetPayload, desiredSheet, markWritten, buildRecords, applyRecords, suggestWeek, excelDeltas, seed, emptyState, setState, getState: () => S, compute, actionsFor, alertsFor, excelPlan, excelCurrent, pendingLaunch, launch, bankView, discordReport, csvCheckin, csvExcel, exportBundle, importData, defaultAmounts, monthlyPaidElsewhere, addExample };
 }
 
 /* Caixa BBPT — ligação ao Google Sheets (script do ficheiro de Finanças) */
@@ -1443,6 +1488,15 @@ function linkFromUrl() {
 }
 
 /* Escrever um torneio (ou despesa/receita geral) no Sheets */
+/* Desfaz no Sheets tudo o que a app escreveu para este torneio/movimento (antes de o apagar) */
+async function undoInSheet(tid, moveId) {
+  const P = sheetPayload(tid, moveId, { empty: true });
+  if (!P.summary.length) return null;
+  const res = await api({ action: 'apply', ...P.req });
+  if (res.sheet) mergeSheet(res.sheet);
+  return res;
+}
+
 async function writeToSheet(tid, moveId) {
   const P = sheetPayload(tid, moveId);
   const preLines = excelCurrent();
@@ -1485,6 +1539,7 @@ async function reloadFromSheet() {
 'use strict';
 
 const GUIDE_CHANGES = [
+  ['3.5.0', 'Apagar um torneio já escrito desfaz primeiro tudo no Sheets. Mudar a semana desmarca a antiga e marca a nova. Despesas apagadas ou mudadas são retiradas e reescritas sozinhas.'],
   ['3.4.1', 'No separador Sheets, o detalhe fica recolhido e os botões de copiar só aparecem no modo manual (sem ligação ou no exemplo).'],
   ['3.4.0', 'Guia dentro da app. Botão "Escrever no Sheets" visível a partir do check-in. Aviso quando a app não está ligada ao Google Sheets.'],
   ['3.3.1', 'O tesoureiro vê o plano completo de depósitos, incluindo o dinheiro que ainda vai receber de outros organizadores.'],
@@ -1516,7 +1571,8 @@ function vGuide() {
       <li><b>Pagar a loja.</b> Pagamentos › <b>Registar pagamento à loja</b>. O valor vem preenchido e a app diz quanto numerário tens. Indica quanto saiu do numerário e quanto do teu bolso.</li>
       <li><b>Acertos.</b> Diz a cada um o que fazer: "Enviar 10 € a paparapas", "Depositar 26 € em BBPT Liga". Quando fizeres, carrega em <b>Registar</b>.</li>
       <li><b>Escrever no Sheets.</b> Separador <b>Sheets</b> do torneio (ou o aviso verde no topo do check-in) › <b>Escrever no Sheets</b> › toca outra vez para confirmar. A app relê o ficheiro e mostra ✓ ou ✗ em cada saldo.</li>
-      <li><b>Depois.</b> Se alguém em dívida pagar ou mudares algo, o aviso volta a aparecer: escreve outra vez e vai só a diferença.</li>
+      <li><b>Depois.</b> Se alguém em dívida pagar, tirares um jogador, mudares valores, a semana ou uma despesa, o aviso volta a aparecer: escreve outra vez e vai só a diferença (marca o que falta, desmarca o que saiu).</li>
+      <li><b>Apagar.</b> Apagar um torneio já escrito desfaz primeiro no Sheets tudo o que a app lá pôs (caixas, meses, adicional, despesas, linha em Income Misc fica a 0). Sem rede, a app não apaga, para o Sheets não ficar com dados a mais.</li>
       <li><b>Discord.</b> Separador Relatório › <b>Copiar mensagem</b>.</li>
     </ol>`)}
 
@@ -1557,7 +1613,7 @@ function vGuide() {
       <li><b>Mais de 13 semanas numa aba.</b> Acrescenta as colunas loja + liga e alarga as fórmulas de totais.</li>
       <li><b>Tabelas cheias.</b> Despesas, Income Misc ou USER LIST sem linhas livres: a app avisa e não escreve. Insere linhas <b>dentro</b> da tabela, antes do Total.</li>
       <li><b>Mudar o nome de um jogador:</b> na USER LIST.</li>
-      <li><b>Corrigir algo já escrito</b> que a app não desfaz: despesa apagada ou mudada depois de escrita, ou torneio que mudou de semana. A app avisa nestes casos.</li>
+      <li><b>Algo escrito à mão</b> no Sheets que a app não conhece (ex.: uma despesa que lançaste diretamente): a app não lhe toca. Corrige no ficheiro.</li>
       <li><b>Receitas para linhas com fórmula</b> (ex.: lançar uma doação diretamente em "Doações"). A app avisa que tem de ser à mão.</li>
       <li><b>Ano novo:</b> copia o ficheiro, cola o script com as chaves e liga a app ao novo link.</li>
     </ol>`)}
@@ -1672,7 +1728,16 @@ function openSheet({ title, body, submit = 'Guardar', onSubmit, onMount, del, de
   if (del) {
     const b = $('#sheetDel');
     b.addEventListener('click', () => {
-      if (b.dataset.armed) { del(); closeSheet(); save(); render(); toast('Apagado'); return; }
+      if (b.dataset.armed) {
+        const r = del();
+        if (r && typeof r.then === 'function') {
+          b.disabled = true; b.textContent = 'A desfazer no Sheets…';
+          r.then((msg) => { closeSheet(); save(); render(); toast(msg || 'Apagado'); })
+            .catch((e) => { toast(e.message && !/fetch/i.test(e.message) ? e.message : 'Sem ligação: não apaguei, para o Sheets não ficar com dados a mais. Tenta quando houver rede.'); b.disabled = false; delete b.dataset.armed; b.textContent = delLabel || 'Apagar'; });
+          return;
+        }
+        closeSheet(); save(); render(); toast('Apagado'); return;
+      }
       b.dataset.armed = '1'; b.textContent = 'Toca outra vez para confirmar';
       setTimeout(() => { if (b.isConnected) { delete b.dataset.armed; b.textContent = delLabel || 'Apagar'; } }, 3500);
     });
@@ -1841,7 +1906,7 @@ function entrySheet(e) {
   const t = tourById(e.tid);
   openSheet({
     title: pn(e.playerId),
-    del: () => { S.entries = S.entries.filter((x) => x.id !== e.id); },
+    del: () => { S.entries = S.entries.filter((x) => x.id !== e.id); if (linked() && t.launched?.by === 'sheet') setTimeout(() => toast('Tirado. Escreve no Sheets para desmarcar as caixas dele.'), 50); return null; },
     delLabel: 'Tirar do check-in',
     body: `
       <fieldset class="comps"><legend>Valores</legend>
@@ -1956,7 +2021,13 @@ function moveForm(kind, move, preset = {}) {
   const isGeneral = !m.tid && (kind === 'receita' || kind === 'despesa');
   openSheet({
     title: (move ? 'Editar · ' : '') + MOVE_LABEL[kind],
-    del: move ? () => { S.moves = S.moves.filter((x) => x.id !== move.id); } : null,
+    del: move ? () => {
+      const drop = () => { S.moves = S.moves.filter((x) => x.id !== move.id); };
+      if (!move.tid && linked() && needsUndo(null, move.id)) return undoInSheet(null, move.id).then(() => { drop(); return 'Apagado da app e retirado do Sheets'; });
+      drop();
+      if (move.tid && tourById(move.tid)?.launched?.by === 'sheet' && move.kind === 'despesa') setTimeout(() => toast('Apagado. Escreve o torneio no Sheets para retirar a despesa.'), 50);
+      return null;
+    } : null,
     body: `${fields}
       <div class="row2"><label class="field">Data<input type="date" name="date" value="${esc(m.date)}"></label>
       <label class="field">Torneio<select name="tid">${tourOpts(m.tid)}</select></label></div>
@@ -2164,7 +2235,12 @@ function tourForm(t) {
   openSheet({
     title: t ? 'Editar torneio' : 'Novo torneio',
     submit: t ? 'Guardar' : 'Criar e abrir check-in',
-    del: t ? () => { S.tournaments = S.tournaments.filter((x) => x.id !== t.id); S.entries = S.entries.filter((x) => x.tid !== t.id); S.moves = S.moves.filter((x) => x.tid !== t.id); UI.tid = null; } : null,
+    del: t ? () => {
+      const drop = () => { S.tournaments = S.tournaments.filter((x) => x.id !== t.id); S.entries = S.entries.filter((x) => x.tid !== t.id); S.moves = S.moves.filter((x) => x.tid !== t.id); UI.tid = null; };
+      if (linked() && needsUndo(t.id)) return undoInSheet(t.id).then(() => { drop(); return 'Torneio apagado da app e desfeito no Sheets'; });
+      drop();
+      return null;
+    } : null,
     delLabel: 'Apagar torneio',
     body: `
       <label class="field">Tipo<select name="typeId">${S.types.map((x) => opt(x.id, x.name, x.id === d.typeId)).join('')}</select></label>
@@ -2179,7 +2255,7 @@ function tourForm(t) {
       <label class="field">Semana no Sheets<select name="sheetWeek" id="weekSel">${weekOpts(d.sheetTab || typeById(d.typeId)?.sheetTab, t ? d.sheetWeek : suggestWeek(typeById(d.typeId)?.sheetTab))}</select></label></div>
       <p class="hint" id="sheetHint"${typeById(d.typeId)?.special ? ' hidden' : ''}>A app sugere a primeira semana vazia. É nessa coluna que os pagamentos vão ser marcados.</p>` : ''}
       ${t ? compEditor(t.comps) + '<p class="hint">Mudar as partes aqui só afeta este torneio. Para mudar todos os futuros, edita o tipo em Mais.</p>' : '<p class="hint">Os preços e linhas do Excel vêm do tipo de torneio (Mais › Tipos de torneio). Podes ajustá-los depois em Editar.</p>'}
-      ${t ? '<p class="hint">Apagar o torneio apaga também o check-in e os movimentos dele.</p>' : ''}`,
+      ${t ? `<p class="hint">Apagar o torneio apaga também o check-in e os movimentos dele${linked() && t.launched?.by === 'sheet' ? ', e antes desfaz no Sheets tudo o que a app lá escreveu (caixas, meses, adicional, despesas)' : ''}.</p>` : ''}`,
     onMount: (form) => {
       const toggleSpecial = () => {
         const sp = !!typeById(form.elements.typeId.value)?.special;
