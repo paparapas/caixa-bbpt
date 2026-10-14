@@ -12,7 +12,7 @@
 <meta name="apple-mobile-web-app-title" content="Caixa BBPT">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" type="image/png" href="icons/favicon.png">
-<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3.5.0">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png?v=3.5.1">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400&display=swap">
 <style>
 :root { padding-top: env(safe-area-inset-top, 0px); }
@@ -411,7 +411,7 @@ details.detail[open] > summary { margin-bottom: 8px; }
 </head>
 <body>
 <main id="main" aria-live="polite"></main><nav class="tabbar" aria-label="Navegação"><button data-act="tab" data-tab="torneios"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4h10v2h3v3a4 4 0 0 1-4 4h-.3A5 5 0 0 1 13 15.9V18h3v2H8v-2h3v-2.1A5 5 0 0 1 8.3 13H8a4 4 0 0 1-4-4V6h3zm-1 4v1a2 2 0 0 0 1 1.7V8zm11 0v2.7A2 2 0 0 0 18 9V8z"/></svg><span>Torneios</span></button><button data-act="tab" data-tab="jogadores"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zm0 2c-3.3 0-7 1.7-7 4v3h14v-3c0-2.3-3.7-4-7-4zm8-2a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm1 2h-.6A5.6 5.6 0 0 1 20 17v3h3v-3c0-2-2.5-3.6-5-4z"/></svg><span>Jogadores</span></button><button data-act="tab" data-tab="resumo"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 13h6V4H4zm0 7h6v-5H4zm10 0h6v-9h-6zm0-16v5h6V4z"/></svg><span>Resumo</span></button><button data-act="tab" data-tab="mais"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h16v2H4z"/></svg><span>Mais</span></button></nav><div id="sheet" hidden></div><div id="toast" role="status" hidden></div>
-<script>window.__PWA__ = true; window.__VERSION__ = '3.5.0';</script>
+<script>window.__PWA__ = true; window.__VERSION__ = '3.5.1';</script>
 <script>
 /* Caixa BBPT — lógica de contas (sem DOM). O check-in por jogador é a base de tudo. */
 'use strict';
@@ -1370,7 +1370,7 @@ function computePush() {
   const recs = buildRecords();
   const push = [];
   recs.forEach((r) => { const b = LINK.base[r.id]; if (!b || b.j !== r.json) push.push({ id: r.id, kind: r.kind, data: r.data }); });
-  Object.keys(LINK.base).forEach((id) => { const b = LINK.base[id]; if (b && b.j !== null && !recs.has(id)) push.push({ id, kind: b.k, deleted: true }); });
+  Object.keys(LINK.base).forEach((id) => { const b = LINK.base[id]; if (b && b.j !== null && !recs.has(id) && !id.startsWith('w:')) push.push({ id, kind: b.k, deleted: true }); });
   return push;
 }
 const pendingCount = () => (linked() && LINK.init && LINK.role === 'org' ? computePush().length : 0);
@@ -1489,21 +1489,35 @@ function linkFromUrl() {
 
 /* Escrever um torneio (ou despesa/receita geral) no Sheets */
 /* Desfaz no Sheets tudo o que a app escreveu para este torneio/movimento (antes de o apagar) */
+async function guardedApply(tid, moveId, req) {
+  const item = tid ? tourById(tid) : S.moves.find((m) => m.id === moveId);
+  try {
+    return await api({ action: 'apply', ...req, guard: { id: tid || moveId, base: item?.launched?.at || 0 } });
+  } catch (e) {
+    if (/Outro organizador escreveu/.test(e.message)) { syncNow({ sheet: true }); }
+    throw e;
+  }
+}
+
 async function undoInSheet(tid, moveId) {
+  await syncNow({ sheet: true });
   const P = sheetPayload(tid, moveId, { empty: true });
   if (!P.summary.length) return null;
-  const res = await api({ action: 'apply', ...P.req });
+  const res = await guardedApply(tid, moveId, P.req);
   if (res.sheet) mergeSheet(res.sheet);
   return res;
 }
 
 async function writeToSheet(tid, moveId) {
+  await syncNow({ sheet: true }); // primeiro apanha o que os outros fizeram
   const P = sheetPayload(tid, moveId);
+  if (!P.summary.length) { UI.report = null; return { checks: [], res: { notFound: [] }, nothing: true }; }
   const preLines = excelCurrent();
   const item = tid ? tourById(tid) : S.moves.find((m) => m.id === moveId);
   const oldSnap = item.launched?.snap;
-  const res = await api({ action: 'apply', ...P.req });
+  const res = await guardedApply(tid, moveId, P.req);
   markWritten(tid, moveId, P.want, res);
+  if (res.writeAt) item.launched.at = res.writeAt;
   item.launched.who = res.who || LINK.who;
   // Verificação: o Sheets mostra o que a app esperava?
   const newSnap = item.launched.snap;
@@ -1539,6 +1553,7 @@ async function reloadFromSheet() {
 'use strict';
 
 const GUIDE_CHANGES = [
+  ['3.5.1', 'Dois organizadores podem fazer check-in ao mesmo tempo. Se ambos carregarem em Escrever no Sheets, só o primeiro escreve; o segundo vê que já está feito.'],
   ['3.5.0', 'Apagar um torneio já escrito desfaz primeiro tudo no Sheets. Mudar a semana desmarca a antiga e marca a nova. Despesas apagadas ou mudadas são retiradas e reescritas sozinhas.'],
   ['3.4.1', 'No separador Sheets, o detalhe fica recolhido e os botões de copiar só aparecem no modo manual (sem ligação ou no exemplo).'],
   ['3.4.0', 'Guia dentro da app. Botão "Escrever no Sheets" visível a partir do check-in. Aviso quando a app não está ligada ao Google Sheets.'],
@@ -1551,7 +1566,7 @@ const GUIDE_CHANGES = [
 
 function vGuide() {
   const sec = (id, title, body) => `<section class="block guide-sec" id="g-${id}"><h2>${title}</h2>${body}</section>`;
-  const toc = [['ideia', 'A ideia'], ['torneio', 'Um torneio do início ao fim'], ['ecras', 'O que há em cada ecrã'], ['dados', 'Onde ficam os dados e quem os vê'], ['manual', 'Quando mexer no Sheets à mão'], ['regras', 'Regras de ouro'], ['problemas', 'Problemas comuns'], ['novidades', 'Novidades']];
+  const toc = [['ideia', 'A ideia'], ['torneio', 'Um torneio do início ao fim'], ['ecras', 'O que há em cada ecrã'], ['dados', 'Onde ficam os dados e quem os vê'], ['manual', 'Quando mexer no Sheets à mão'], ['dois', 'Dois organizadores ao mesmo tempo'], ['regras', 'Regras de ouro'], ['problemas', 'Problemas comuns'], ['novidades', 'Novidades']];
   return `
   <header class="top ev-top"><button type="button" class="link back" data-act="tab" data-tab="mais">‹ Mais</button>
     <div class="ev-title"><p class="eyebrow">Versão ${esc(window.__VERSION__ || 'pré-visualização')}</p><h1>Guia da Caixa BBPT</h1></div></header>
@@ -1617,6 +1632,15 @@ function vGuide() {
       <li><b>Receitas para linhas com fórmula</b> (ex.: lançar uma doação diretamente em "Doações"). A app avisa que tem de ser à mão.</li>
       <li><b>Ano novo:</b> copia o ficheiro, cola o script com as chaves e liga a app ao novo link.</li>
     </ol>`)}
+
+  ${sec('dois', 'Dois organizadores ao mesmo tempo', `
+    <ul class="g-list">
+      <li>Podem fazer check-in no mesmo torneio ao mesmo tempo, cada um nos seus jogadores. Cada jogador é guardado à parte, por isso não se apagam um ao outro.</li>
+      <li>As alterações chegam ao outro telemóvel em até 20 segundos (ou logo, ao tocar na bolinha "Google Sheets" no topo).</li>
+      <li>Se os dois adicionarem o mesmo jogador, a app avisa "está duas vezes no check-in": tira um.</li>
+      <li>Se os dois mudarem o mesmo jogador, fica a última alteração. Combinem quem trata de quê (ex.: um faz o check-in, o outro os pagamentos).</li>
+      <li>Escrever no Sheets: a app apanha primeiro o que o outro fez. Se ambos carregarem ao mesmo tempo, só um escreve; o outro recebe "já estava tudo" ou um aviso para rever.</li>
+    </ul>`)}
 
   ${sec('regras', 'Regras de ouro', `
     <ul class="g-list">
@@ -2625,7 +2649,7 @@ function onClick(ev) {
       t.disabled = true; t.textContent = 'A escrever…';
       const inSheet = !$('#sheet').hidden;
       writeToSheet(t.dataset.tid || null, t.dataset.mid || null)
-        .then((r) => { const bad = r.checks.filter((c) => !c.ok).length; toast(bad ? `Escrito, mas ${bad} valor(es) não batem. Vê o relatório.` : 'Escrito no Sheets e confirmado ✓'); if (inSheet) closeSheet(); render(); })
+        .then((r) => { if (r.nothing) { toast('Já estava tudo no Sheets (outro organizador escreveu antes).'); render(); return; } const bad = r.checks.filter((c) => !c.ok).length; toast(bad ? `Escrito, mas ${bad} valor(es) não batem. Vê o relatório.` : 'Escrito no Sheets e confirmado ✓'); if (inSheet) closeSheet(); render(); })
         .catch((e) => { toast(e.message.includes('fetch') ? 'Sem ligação. Tenta outra vez quando houver rede.' : e.message); if (t.isConnected) { t.disabled = false; t.textContent = 'Escrever no Sheets'; } });
       break;
     }
